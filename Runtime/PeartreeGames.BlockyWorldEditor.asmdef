@@ -1,0 +1,14 @@
+﻿{
+  "name": "PeartreeGames.BlockyWorldEditor",
+  "rootNamespace": "PeartreeGames.BlockyWorldEditor",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,67 @@
+﻿.unity-toggle__input {
+    justify-content: center;
+    height: 25px;
+}
+
+.preview-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 10px;
+    width: 100%;
+    background-color: #2d2d2d;
+    position: relative;
+}
+
+.preview {
+    -unity-background-scale-mode: scale-to-fit;
+    min-width: 80px;
+    max-width: 100px;
+    min-height: 100px;
+    max-height: 120px;
+}
+
+.preview-label {
+    white-space: normal;
+}
+
+.preview-active {
+    border-color: aqua;
+    border-width: 2px;
+}
+
+.preview-rule {
+    width: 64px;
+    height: 64px;
+    margin: 1px;
+    margin-right: 10px;
+    padding: 0;
+}
+
+.rule-box {
+    flex-direction: row;
+}
+
+.grid {
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    margin-right: 10px;
+}
+
+.row {
+    flex-direction: row;
+    padding: 0;
+    margin: 0;
+}
+
+.cell {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 1px;
+}
+
+
+.parent-override {
+    background-color: #770000;
+}

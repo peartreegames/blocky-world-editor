@@ -1,0 +1,21 @@
+﻿{
+  "name": "PeartreeGames.BlockyWorldEditor.Editor",
+  "rootNamespace": "PeartreeGames.BlockyWorldEditor.Editor",
+  "references": [
+    "PeartreeGames.BlockyWorldEditor",
+    "Unity.Addressables",
+    "Unity.Addressables.Editor",
+    "Unity.ResourceManager"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
