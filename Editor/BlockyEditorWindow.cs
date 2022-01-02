@@ -10,14 +10,15 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
     public class BlockyEditorWindow : EditorWindow
     {
         private BlockyEditorSettings _settings;
+        private SerializedObject _serializedSettings;
         private BlockyObjectMap _map;
         private bool _isDragging;
         private readonly HashSet<Vector3Int> _draggingSet = new();
 
         private bool _isSquareDragging;
-        private List<Vector3Int> _draggingSquareList = new();
+        private readonly List<Vector3Int> _draggingSquareList = new();
         private Vector3Int _dragStartPosition;
-        
+
         public static readonly Vector3 GridOffset = new(0.5f, 0, 0.5f);
         private IBlockyPiece CurrentBlocky => _settings == null ? null : _settings.Selected;
 
@@ -32,10 +33,37 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         private void OnEnable()
         {
             PopulateMap();
-            BlockyEditorSceneManager.Init();
-            if (_settings == null) _settings = CreateInstance<BlockyEditorSettings>();
+            if (_settings == null)
+            {
+                var guids = AssetDatabase.FindAssets($"t:{nameof(BlockyEditorSettings)}");
+                if (guids.Length == 0)
+                {
+                    _settings = CreateInstance<BlockyEditorSettings>();
+                    AssetDatabase.CreateAsset(_settings, "Assets/BlockyEditorSettings.asset");
+                    var defaultParent = CreateInstance<BlockyDefaultParentSetter>();
+                    defaultParent.name = defaultParent.GetType().Name;
+                    AssetDatabase.AddObjectToAsset(defaultParent, _settings);
+                    _settings.parentSetter = defaultParent;
+                    AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(_settings));
+                }
+                else
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                    _settings = AssetDatabase.LoadAssetAtPath<BlockyEditorSettings>(path);
+                }
+            }
+
+            if (_settings.parentSetter == null)
+            {
+                _settings.parentSetter =
+                    AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(_settings))
+                        .First(a => a is BlockyParentSetter) as BlockyParentSetter;
+                
+            }
+            if (_serializedSettings == null) _serializedSettings = new SerializedObject(_settings);
+            _serializedSettings.ApplyModifiedProperties();
             rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("BlockyEditor"));
-            var settingsView = new BlockySettingsElement(this, _settings);
+            var settingsView = new BlockySettingsElement(this, _serializedSettings);
             rootVisualElement.Add(settingsView);
 
             RefreshPalette();
@@ -68,11 +96,12 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
         private void OnSceneGUI(SceneView sceneView)
         {
-            if (_settings.editMode == EditMode.None) return;
+            if (_settings.editMode == BlockyEditMode.None) return;
             if (!BlockyUtilities.TryGetTargetPoint(Event.current.mousePosition, _settings.gridHeight,
                     out _settings.target)) return;
-            BlockyUtilities.SetTargetVisualization(_settings.target, _settings.editMode, _settings.brushSize, _isSquareDragging, _draggingSquareList, _dragStartPosition);
-            BlockyUtilities.SetBoundsVisualization(_settings.target, _settings.gridHeight);
+            BlockyUtilities.SetTargetVisualization(_settings.target, _settings.editMode, _settings.brushSize,
+                _isSquareDragging, _draggingSquareList, _dragStartPosition);
+            _settings.parentSetter.SetBoundsVisualization(_settings.target, _settings.gridHeight);
 
             HandleInput(_settings.target);
             HandleUtility.Repaint();
@@ -121,22 +150,23 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 Repaint();
                 return;
             }
+
             if (evt.type == EventType.Layout)
             {
                 var controlId = GUIUtility.GetControlID(GetHashCode(), FocusType.Passive);
                 HandleUtility.AddDefaultControl(controlId);
             }
-            
+
             Action<Vector3Int> action = _settings.editMode switch
             {
-                EditMode.None => null,
-                EditMode.Paint => evt.control ? RemoveBlockyObject : AddBlockyObject,
-                EditMode.Select => evt.control ? RemoveBlockySelection : AddBlockySelection,
+                BlockyEditMode.None => null,
+                BlockyEditMode.Paint => evt.control ? RemoveBlockyObject : AddBlockyObject,
+                BlockyEditMode.Select => evt.control ? RemoveBlockySelection : AddBlockySelection,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
             if (action == null || evt.button != decimal.Zero || CurrentBlocky == null) return;
-            
+
             if (evt.type == EventType.MouseUp)
             {
                 evt.Use();
@@ -144,17 +174,18 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 {
                     _isSquareDragging = false;
                     _dragStartPosition = Vector3Int.zero;
-                    foreach(var pos in _draggingSquareList) action(pos);
+                    foreach (var pos in _draggingSquareList) action(pos);
                     _draggingSquareList.Clear();
                     return;
                 }
+
                 _isDragging = false;
                 _draggingSet.Clear();
                 return;
             }
 
             if (_isSquareDragging) return;
-            
+
             if (evt.type != EventType.MouseDown && evt.type != EventType.MouseDrag) return;
             if (evt.type == EventType.MouseDrag && !evt.shift) _isDragging = true;
             if (evt.shift)
@@ -164,7 +195,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 evt.Use();
                 return;
             }
-            
+
             if (!_isDragging || !_draggingSet.Contains(target))
             {
                 action(target);
@@ -182,7 +213,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     _draggingSet.Add(addPos);
                 }
             }
-
         }
 
         public void RefreshPalette()
@@ -253,6 +283,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 SetNeighbourObjects(pos);
             }
         }
+
         private void AddBlockyObject(Vector3Int pos)
         {
             if (CurrentBlocky == null) return;
@@ -267,10 +298,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             if (block == null) throw new ArgumentNullException(nameof(block));
             block.transform.position = pos;
 
-            var parent = _settings.parentOverride
-                ? _settings.parentOverride.transform
-                : BlockyEditorSceneManager.GetParent(block);
-                block.transform.SetParent(parent);
+            var parent = _settings.parentSetter.GetParent(block);
+            block.transform.SetParent(parent);
             _map.Add(block);
             SetNeighbourObjects(pos);
         }
@@ -293,7 +322,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     update.transform.SetParent(existingTransform.parent);
                     _map.Add(update);
                     DestroyImmediate(existingBlock.gameObject);
-
                 }
             }
         }

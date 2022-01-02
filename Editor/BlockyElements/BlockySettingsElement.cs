@@ -1,16 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace PeartreeGames.BlockyWorldEditor.Editor
 {
-    
     public sealed class BlockySettingsElement : VisualElement
     {
-        public BlockySettingsElement(BlockyEditorWindow window, BlockyEditorSettings settings)
+        public BlockySettingsElement(BlockyEditorWindow window, SerializedObject serializedSettings)
         {
+            var settings = (BlockyEditorSettings) serializedSettings.targetObject;
             var palettes = GetPalettes();
             var paletteDropdown = new DropdownField()
             {
@@ -27,8 +29,42 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 window.RefreshPalette();
             });
 
+            var serializedParentSetterProperty = serializedSettings.FindProperty("parentSetter");
+            var parentSetters = GetParentSetters(serializedSettings);
+            var parentSetterDropdown = new DropdownField()
+            {
+                choices = parentSetters.Select(p => p.GetType().Name).ToList(),
+                value = parentSetters.Find(p =>
+                        p.GetType().Name == serializedParentSetterProperty.objectReferenceValue.GetType().Name)
+                    .GetType()
+                    .Name,
+                label = "Parent Setter"
+            };
+
             var placement = new GroupBox();
-            var serializedSettings = new SerializedObject(settings);
+
+            var parentSetterBox = CreateParentSetterBox(serializedParentSetterProperty);
+            parentSetterBox.Insert(0, parentSetterDropdown);
+            placement.Insert(0, parentSetterBox);
+            parentSetterDropdown.RegisterCallback<ClickEvent>(_ =>
+            {
+                parentSetters = GetParentSetters(serializedSettings);
+                parentSetterDropdown.choices = parentSetters.Select(p => p.GetType().Name).ToList();
+            });
+
+            parentSetterDropdown.RegisterValueChangedCallback(change =>
+            {
+                serializedParentSetterProperty.objectReferenceValue =
+                    parentSetters.Find(p => p.GetType().Name == change.newValue);
+                serializedSettings.ApplyModifiedProperties();
+                serializedParentSetterProperty = serializedSettings.FindProperty("parentSetter");
+                var prev = placement.Q("ParentSetter");
+                prev?.parent.Remove(prev);
+                parentSetterBox = CreateParentSetterBox(serializedParentSetterProperty);
+                parentSetterBox.Insert(0, parentSetterDropdown);
+                placement.Insert(0, parentSetterBox);
+            });
+            
             var targetPosition = new PropertyField(serializedSettings.FindProperty("target"));
             targetPosition.Bind(serializedSettings);
             targetPosition.SetEnabled(false);
@@ -39,30 +75,17 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var brushSize = new PropertyField(serializedSettings.FindProperty("brushSize"));
             brushSize.Bind(serializedSettings);
 
-            var parentOverride = new PropertyField(serializedSettings.FindProperty("parentOverride"));
-            parentOverride.Bind(serializedSettings);
-            parentOverride.RegisterValueChangeCallback(go =>
-            {
-                if (go.changedProperty.objectReferenceValue == null) parentOverride.RemoveFromClassList("parent-override");
-                else parentOverride.AddToClassList("parent-override");
-            });
-            
-            placement.Add(targetPosition);
-            placement.Add(gridHeight);
-            placement.Add(brushSize);
-            placement.Add(parentOverride);
-
             var modes = new GroupBox();
             var paintButton = new ToolbarToggle() {text = "Paint"};
             var selectButton = new ToolbarToggle() {text = "Select"};
             paintButton.RegisterValueChangedCallback(c =>
             {
-                settings.editMode = c.newValue ? EditMode.Paint : EditMode.None;
+                settings.editMode = c.newValue ? BlockyEditMode.Paint : BlockyEditMode.None;
                 selectButton.SetValueWithoutNotify(false);
             });
             selectButton.RegisterValueChangedCallback(c =>
             {
-                settings.editMode = c.newValue ? EditMode.Select : EditMode.None;
+                settings.editMode = c.newValue ? BlockyEditMode.Select : BlockyEditMode.None;
                 paintButton.SetValueWithoutNotify(false);
             });
             modes.Add(paintButton);
@@ -75,7 +98,53 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             settingsView.Add(modes);
             contentContainer.Add(settingsView);
         }
-        
+
+        private static GroupBox CreateParentSetterBox(SerializedProperty prop)
+        {
+            var box = new GroupBox {name = "ParentSetter"};
+            if (prop.objectReferenceValue == null) return box;
+            var obj = new SerializedObject(prop.objectReferenceValue);
+            box.AddToClassList("parent-setter");
+            var itr = obj.GetIterator();
+            if (itr.NextVisible(true))
+            {
+                do
+                {
+                    if (itr.name == "m_Script") continue;
+                    var field = new PropertyField(itr);
+                    field.Bind(obj);
+                    box.Add(field);
+                } while (itr.NextVisible(false));
+            }
+
+            return box;
+        }
+
+        private static List<BlockyParentSetter> GetParentSetters(SerializedObject obj)
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var parentSetterClasses = new List<BlockyParentSetter>();
+            foreach (var assembly in assemblies)
+            {
+                var parentSetters = assembly.GetTypes()
+                    .Where(t => !t.IsAbstract && t.IsSubclassOf(typeof(BlockyParentSetter))).Select(
+                        t => ScriptableObject.CreateInstance(t.Name) as BlockyParentSetter).ToList();
+                parentSetterClasses.AddRange(parentSetters);
+            }
+
+            var path = AssetDatabase.GetAssetPath(obj.targetObject);
+            var subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
+            foreach (var result in parentSetterClasses)
+            {
+                if (Array.Exists(subAssets, sub => sub.GetType().Name == result.GetType().Name)) continue;
+                result.name = result.GetType().Name;
+                AssetDatabase.AddObjectToAsset(result, obj.targetObject);
+                AssetDatabase.ImportAsset(path);
+            }
+            
+            return AssetDatabase.LoadAllAssetsAtPath(path).OfType<BlockyParentSetter>().ToList();
+        }
+
         private static List<BlockyPalette> GetPalettes() => AssetDatabase.FindAssets($"t:{nameof(BlockyPalette)}")
             .Select(guid => AssetDatabase.LoadAssetAtPath<BlockyPalette>(AssetDatabase.GUIDToAssetPath(guid))).ToList();
     }

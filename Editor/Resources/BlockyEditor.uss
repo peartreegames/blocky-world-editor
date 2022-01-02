@@ -3,6 +3,11 @@
     height: 25px;
 }
 
+.parent-setter {
+    padding: 5px;
+    background-color: #2d2d2d;
+}
+
 .preview-container {
     flex-direction: row;
     flex-wrap: wrap;

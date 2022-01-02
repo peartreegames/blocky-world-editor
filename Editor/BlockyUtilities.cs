@@ -9,39 +9,20 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         public static float ClampAngle(float rotationY) => rotationY < 0 ? 360 - Mathf.Abs(rotationY) % 360 :
             rotationY > 360 ? rotationY % 360 : rotationY;
 
-        public static void SetBoundsVisualization(Vector3Int target, int gridHeight)
-        {
-            var originalColor = Handles.color;
-            Handles.color = Color.cyan * 0.5f;
-            var center = GetSectionPosition(target, gridHeight);
-            Handles.DrawWireCube(center, new Vector3(100, 0, 100));
-            var quad = GetQuadPosition(target, gridHeight);
-            Handles.color = Color.cyan * 0.35f;
-            Handles.DrawWireCube(quad, new Vector3(50, 0, 50));
-            Handles.color = originalColor;
-        }
-
         public static Vector3Int SnapToGrid(Vector3 hit, int gridHeight, int gridSize = 1) =>
             new(Mathf.RoundToInt(hit.x / gridSize) * gridSize, gridHeight,
                 Mathf.RoundToInt(hit.z / gridSize) * gridSize);
 
-        public static Vector3 GetSectionPosition(Vector3Int target, int gridHeight) =>
-            SnapToGrid(target - BlockyEditorWindow.GridOffset, gridHeight, 100) + BlockyEditorWindow.GridOffset;
-
-        public static Vector3 GetQuadPosition(Vector3Int target, int gridHeight) =>
-            SnapToGrid(target - new Vector3(25.5f, 0, 25.5f), gridHeight, 50) + new Vector3(25.5f, 0, 25.5f);
-
-        public static void SetTargetVisualization(Vector3Int target, EditMode mode, int brushSize, bool isSquareDragging, List<Vector3Int> squareDraggingList, Vector3Int squareDragStart)
+        public static void SetTargetVisualization(Vector3Int target, BlockyEditMode mode, int brushSize, bool isSquareDragging, List<Vector3Int> squareDraggingList, Vector3Int squareDragStart)
         {
             var originalColor = Handles.color;
             Handles.color = Event.current.control ? Color.red : Color.cyan;
             var gridSize = Vector3.one;
-            if (mode == EditMode.Paint)
+            if (mode == BlockyEditMode.Paint)
             {
                 // render placement prefab
             }
-                
-
+            
             var offset = new Vector3(0, -0.5f, 0);
 
             if (isSquareDragging)

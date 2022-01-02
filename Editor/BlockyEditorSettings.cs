@@ -2,7 +2,7 @@
 
 namespace PeartreeGames.BlockyWorldEditor.Editor
 {
-    public enum EditMode
+    public enum BlockyEditMode
     {
         None,
         Paint,
@@ -11,7 +11,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
     public class BlockyEditorSettings : ScriptableObject
     {
         public Vector3Int target;
-        public EditMode editMode;
+        public BlockyEditMode editMode;
         public int gridHeight;
         public Vector3 rotation;
         [Range(0, 3)]
@@ -19,7 +19,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
         public BlockyPalette palette;
         public IBlockyPiece Selected;
-
-        public GameObject parentOverride;
+        public BlockyParentSetter parentSetter;
     }
 }
