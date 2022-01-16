@@ -21,6 +21,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
         public static readonly Vector3 GridOffset = new(0.5f, 0, 0.5f);
         private IBlockyPiece CurrentBlocky => _settings == null ? null : _settings.Selected;
+        public Action<BlockyEditMode> onBlockyModeChange;
 
         [MenuItem("Window/BlockyEditor")]
         private static void ShowWindow()
@@ -32,6 +33,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
         private void OnEnable()
         {
+            onBlockyModeChange = delegate {  };
             PopulateMap();
             if (_settings == null)
             {
@@ -326,7 +328,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             }
         }
 
-        private void PopulateMap()
+        public void PopulateMap()
         {
             _map = new BlockyObjectMap();
             var objs = FindObjectsOfType<BlockyObject>();

@@ -30,7 +30,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             });
 
             var serializedParentSetterProperty = serializedSettings.FindProperty("parentSetter");
-            var parentSetters = GetParentSetters(serializedSettings);
+            var parentSetters = GetParentSetters(serializedSettings, window);
             var parentSetterDropdown = new DropdownField()
             {
                 choices = parentSetters.Select(p => p.GetType().Name).ToList(),
@@ -48,7 +48,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             placement.Insert(0, parentSetterBox);
             parentSetterDropdown.RegisterCallback<ClickEvent>(_ =>
             {
-                parentSetters = GetParentSetters(serializedSettings);
+                parentSetters = GetParentSetters(serializedSettings, window);
                 parentSetterDropdown.choices = parentSetters.Select(p => p.GetType().Name).ToList();
             });
 
@@ -56,6 +56,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             {
                 serializedParentSetterProperty.objectReferenceValue =
                     parentSetters.Find(p => p.GetType().Name == change.newValue);
+                ((BlockyParentSetter)serializedParentSetterProperty.objectReferenceValue).Init(window); 
                 serializedSettings.ApplyModifiedProperties();
                 serializedParentSetterProperty = serializedSettings.FindProperty("parentSetter");
                 var prev = placement.Q("ParentSetter");
@@ -81,11 +82,16 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             paintButton.RegisterValueChangedCallback(c =>
             {
                 settings.editMode = c.newValue ? BlockyEditMode.Paint : BlockyEditMode.None;
+                ((BlockyParentSetter)serializedParentSetterProperty.objectReferenceValue).Init(window);
+                window.onBlockyModeChange?.Invoke(settings.editMode);
+                window.PopulateMap();
                 selectButton.SetValueWithoutNotify(false);
             });
             selectButton.RegisterValueChangedCallback(c =>
             {
                 settings.editMode = c.newValue ? BlockyEditMode.Select : BlockyEditMode.None;
+                window.onBlockyModeChange?.Invoke(settings.editMode);
+                window.PopulateMap();
                 paintButton.SetValueWithoutNotify(false);
             });
             modes.Add(paintButton);
@@ -120,7 +126,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             return box;
         }
 
-        private static List<BlockyParentSetter> GetParentSetters(SerializedObject obj)
+        private static List<BlockyParentSetter> GetParentSetters(SerializedObject obj, BlockyEditorWindow window)
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             var parentSetterClasses = new List<BlockyParentSetter>();
@@ -136,6 +142,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
             foreach (var result in parentSetterClasses)
             {
+                result.Init(window);
                 if (Array.Exists(subAssets, sub => sub.GetType().Name == result.GetType().Name)) continue;
                 result.name = result.GetType().Name;
                 AssetDatabase.AddObjectToAsset(result, obj.targetObject);
