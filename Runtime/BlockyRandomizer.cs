@@ -11,6 +11,7 @@ namespace PeartreeGames.BlockyWorldEditor
         public BlockyLayer Layer => layer;
 
         [SerializeField] private List<Object> blocks;
+        
         public List<IBlockyPiece> Blocks
         {
             get
@@ -36,8 +37,16 @@ namespace PeartreeGames.BlockyWorldEditor
             return pieces.Count > 0 ? pieces[Random.Range(0, pieces.Count)].GetPrefab(map, key) : null;
         }
 
+        public GameObject GetPlacement()
+        {
+            var pieces = Blocks;
+            return pieces.Count > 0 ? pieces[Random.Range(0, pieces.Count)].GetPlacement() : null;
+        }
+
+
         public Texture2D GetTexture()
         {
+
             var pieces = Blocks.ToArray();
             if (pieces.Length == 0) return Texture2D.grayTexture;
             var textures = new Texture2D[pieces.Length];

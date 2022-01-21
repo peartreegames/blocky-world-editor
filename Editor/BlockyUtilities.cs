@@ -13,7 +13,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             new(Mathf.RoundToInt(hit.x / gridSize) * gridSize, gridHeight,
                 Mathf.RoundToInt(hit.z / gridSize) * gridSize);
 
-        public static void SetTargetVisualization(Vector3Int target, BlockyEditMode mode, int brushSize, bool isSquareDragging, List<Vector3Int> squareDraggingList, Vector3Int squareDragStart)
+        public static void SetTargetVisualization(Vector3Int target, BlockyEditMode mode, int brushSize,
+            bool isSquareDragging, List<Vector3Int> squareDraggingList, Vector3Int squareDragStart)
         {
             var originalColor = Handles.color;
             Handles.color = Event.current.control ? Color.red : Color.cyan;
@@ -22,7 +23,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             {
                 // render placement prefab
             }
-            
+
             var offset = new Vector3(0, -0.5f, 0);
 
             if (isSquareDragging)
@@ -36,8 +37,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 Handles.color = originalColor;
                 return;
             }
-            
-            
+
+
             Handles.DrawWireCube(target + offset, gridSize);
             for (var i = -brushSize; i <= brushSize; i++)
             {
@@ -47,10 +48,12 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     Handles.DrawWireCube(target + new Vector3Int(i, 0, j) + offset, gridSize);
                 }
             }
+
             Handles.color = originalColor;
         }
 
-        private static List<Vector3Int> SetDraggingList(Vector3Int target, List<Vector3Int> squareDraggingList, Vector3Int squareDragStart)
+        private static List<Vector3Int> SetDraggingList(Vector3Int target, List<Vector3Int> squareDraggingList,
+            Vector3Int squareDragStart)
         {
             squareDraggingList.Clear();
             var xIntervals = Mathf.Abs(squareDragStart.x - target.x);
@@ -80,6 +83,33 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var hit = ray.GetPoint(enter);
             targetHit = SnapToGrid(hit, gridHeight);
             return true;
+        }
+
+        public static void SetPlacementVisualization(Vector3Int target, Vector3 rotation, BlockyEditMode mode, IBlockyPiece current,
+            Shader shader, ref GameObject placementObject)
+        {
+            if (current == null || mode != BlockyEditMode.Paint) return;
+            if (placementObject == null || placementObject.name != $"PLACEMENT_{current.Name}")
+            {
+                Object.DestroyImmediate(placementObject);
+                placementObject = Object.Instantiate(current.GetPlacement());
+                placementObject.name = $"PLACEMENT_{current.Name}";
+                var rends = placementObject.GetComponentsInChildren<MeshRenderer>();
+                if (rends.Length > 0)
+                {
+                    foreach (var rend in rends)
+                    {
+                        var tempMat = new Material(rend.sharedMaterial) {shader = shader};
+                        var col = tempMat.color;
+                        col.a = 0.4f;
+                        tempMat.color = col;
+                        rend.material = tempMat;
+                    }
+                }
+
+            }
+            placementObject.transform.position = target;
+            placementObject.transform.rotation = Quaternion.Euler(rotation);
         }
     }
 }

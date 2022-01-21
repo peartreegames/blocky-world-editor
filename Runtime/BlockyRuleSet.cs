@@ -14,7 +14,7 @@ namespace PeartreeGames.BlockyWorldEditor
 
         [SerializeField] private GameObject defaultBlock;
         public List<BlockyRule> rules;
-        
+        [SerializeField] private Texture2D thumbnail;
         public string Name => name;
         public BlockyObject GetPrefab(BlockyObjectMap map, BlockyObjectKey key)
         {
@@ -91,6 +91,8 @@ namespace PeartreeGames.BlockyWorldEditor
             return prefab;
         }
 
+        public GameObject GetPlacement() => defaultBlock;
+
         private static BlockyObject[] MirrorNeighbours(BlockyObject[] neighbours, bool x, bool y)
         {
             var result = new BlockyObject[9];
@@ -123,6 +125,7 @@ namespace PeartreeGames.BlockyWorldEditor
 
         public Texture2D GetTexture()
         {
+            if (thumbnail != null) return thumbnail;
             var blocks = rules.Select(r => r.block == null ? null : r.block.GetComponent<BlockyObject>()).ToArray();
             if (blocks.Length == 0) return Texture2D.grayTexture;
             var textures = new Texture2D[blocks.Length];

@@ -8,6 +8,8 @@ namespace PeartreeGames.BlockyWorldEditor
         public BlockyLayer Layer => layer;
         public string Name => name;
 
+        public bool allowRandomRotation;
+
         public BlockyObject GetPrefab(BlockyObjectMap map, BlockyObjectKey key)
         {
 #if UNITY_EDITOR
@@ -16,6 +18,8 @@ namespace PeartreeGames.BlockyWorldEditor
             return null;
 #endif
         }
+
+        public GameObject GetPlacement() => gameObject;
 
         public Texture2D GetTexture()
         {

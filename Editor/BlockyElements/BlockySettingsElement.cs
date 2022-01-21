@@ -70,11 +70,24 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             targetPosition.Bind(serializedSettings);
             targetPosition.SetEnabled(false);
 
+            var targetRotation = new PropertyField(serializedSettings.FindProperty("rotation"));
+            targetRotation.Bind(serializedSettings);
+            targetRotation.SetEnabled(false);
+
+            var randomRotation = new PropertyField(serializedSettings.FindProperty("randomRotation"));
+            randomRotation.Bind(serializedSettings);
+
             var gridHeight = new PropertyField(serializedSettings.FindProperty("gridHeight"));
             gridHeight.Bind(serializedSettings);
 
             var brushSize = new PropertyField(serializedSettings.FindProperty("brushSize"));
             brushSize.Bind(serializedSettings);
+            
+            placement.Add(targetPosition);
+            placement.Add(targetRotation);
+            placement.Add(randomRotation);
+            placement.Add(gridHeight);
+            placement.Add(brushSize);
 
             var modes = new GroupBox();
             var paintButton = new ToolbarToggle() {text = "Paint"};

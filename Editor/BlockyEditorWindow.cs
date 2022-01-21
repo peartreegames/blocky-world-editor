@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Random = UnityEngine.Random;
 
 namespace PeartreeGames.BlockyWorldEditor.Editor
 {
@@ -23,6 +25,10 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         private IBlockyPiece CurrentBlocky => _settings == null ? null : _settings.Selected;
         public Action<BlockyEditMode> onBlockyModeChange;
 
+        private GameObject _placementObject;
+        private Shader _placementShader;
+        
+
         [MenuItem("Window/BlockyEditor")]
         private static void ShowWindow()
         {
@@ -34,6 +40,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         private void OnEnable()
         {
             onBlockyModeChange = delegate {  };
+            onBlockyModeChange += OnBlockyModeChange;
+            _placementShader = Shader.Find("Blocky/Placement");
             PopulateMap();
             if (_settings == null)
             {
@@ -72,6 +80,15 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             Repaint();
         }
 
+        private void OnBlockyModeChange(BlockyEditMode mode)
+        {
+            if (mode != BlockyEditMode.Paint && _placementObject != null)
+            {
+                DestroyImmediate(_placementObject);
+                EditorSceneManager.MarkAllScenesDirty();
+            }
+        }
+
 
         private void OnFocus()
         {
@@ -81,6 +98,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
         private void OnDestroy()
         {
+            if (_placementObject != null) DestroyImmediate(_placementObject);
             SceneView.duringSceneGui -= OnSceneGUI;
             _draggingSet.Clear();
             _draggingSet.TrimExcess();
@@ -90,6 +108,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
         private void OnLostFocus()
         {
+            if (_placementObject != null) DestroyImmediate(_placementObject);
             _draggingSet.Clear();
             _draggingSet.TrimExcess();
             _draggingSquareList.Clear();
@@ -103,8 +122,9 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     out _settings.target)) return;
             BlockyUtilities.SetTargetVisualization(_settings.target, _settings.editMode, _settings.brushSize,
                 _isSquareDragging, _draggingSquareList, _dragStartPosition);
+            BlockyUtilities.SetPlacementVisualization(_settings.target, _settings.rotation, _settings.editMode, CurrentBlocky, _placementShader, ref _placementObject);
             _settings.parentSetter.SetBoundsVisualization(_settings.target, _settings.gridHeight);
-
+            
             HandleInput(_settings.target);
             HandleUtility.Repaint();
         }
@@ -123,10 +143,13 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                         _settings.gridHeight++;
                         break;
                     case KeyCode.Q:
-                        _settings.rotation.y = BlockyUtilities.ClampAngle(_settings.rotation.y - 90);
+                        _settings.rotation.y = BlockyUtilities.ClampAngle(_settings.rotation.y + 90);
                         break;
                     case KeyCode.E:
-                        _settings.rotation.y = BlockyUtilities.ClampAngle(_settings.rotation.y + 90);
+                        _settings.rotation.y = BlockyUtilities.ClampAngle(_settings.rotation.y - 90);
+                        break;
+                    case KeyCode.R:
+                        _settings.randomRotation = !_settings.randomRotation;
                         break;
                     case KeyCode.Equals:
                         _settings.brushSize = Mathf.Clamp(_settings.brushSize + 1, 0, 3);
@@ -299,8 +322,13 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var block = CurrentBlocky.GetPrefab(_map, key);
             if (block == null) throw new ArgumentNullException(nameof(block));
             block.transform.position = pos;
-
+            block.transform.rotation = Quaternion.Euler(_settings.rotation);
             var parent = _settings.parentSetter.GetParent(block);
+            if (_settings.randomRotation && block.allowRandomRotation)
+            {
+                var rnd = Random.Range(0, 4);
+                block.transform.rotation = Quaternion.Euler(new Vector3(0, rnd * 90, 0));
+            }
             block.transform.SetParent(parent);
             _map.Add(block);
             SetNeighbourObjects(pos);
