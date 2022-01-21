@@ -43,5 +43,24 @@ Collection of BlockyObjects which will choose one at random. Good for landscapin
 
 To create your own ParentSetter create a new class derived from the BlockyParentSetter, which will return a Transform. This allows you to place your objects however you wish. See the [BlockyWorldStreamer](https://github.com/peartreegames/blocky-world-streamer/) for an example.
 
+
+## Hotkeys
+
+| Key | Description |
+| --- | --- |
+| W/S | Grid Height |
+| Shift | Box drag |
+| Ctrl | Remove |
+| Q/E | Rotate 90 degress |
+| R | Random Rotation |
+| 1-4 | Brush Size |
+| +/- | Increase/Decrease Brush Size |
+
+## Notes
+
+BlockyObjects have a "allowRandomRotation" flag, when using RandomRotation in the editor only those set will be rotated, otherwise will be set to the current rotation (or BlockyParentSetter's rotation).
+
 ## Todo
-  - [] Implement random rotation
+  - [x] Implement random rotation
+  - [x] Implement placement visualization
+  - [ ] Better refresh (editor/palettes) on changes
