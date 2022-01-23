@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -22,6 +23,12 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     : palettes.Find(palette => palette.name == settings.palette.name).name,
                 label = "Palette"
             };
+            paletteDropdown.RegisterCallback<FocusEvent>(_ =>
+            {
+                palettes = GetPalettes();
+                paletteDropdown.choices = palettes.Select(palette => palette.name).ToList();
+                MarkDirtyRepaint();
+            });
 
             paletteDropdown.RegisterValueChangedCallback(changed =>
             {
@@ -46,10 +53,11 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var parentSetterBox = CreateParentSetterBox(serializedParentSetterProperty);
             parentSetterBox.Insert(0, parentSetterDropdown);
             placement.Insert(0, parentSetterBox);
-            parentSetterDropdown.RegisterCallback<ClickEvent>(_ =>
+            parentSetterDropdown.RegisterCallback<FocusEvent>(_ =>
             {
                 parentSetters = GetParentSetters(serializedSettings, window);
                 parentSetterDropdown.choices = parentSetters.Select(p => p.GetType().Name).ToList();
+                MarkDirtyRepaint();
             });
 
             parentSetterDropdown.RegisterValueChangedCallback(change =>
@@ -122,22 +130,38 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         {
             var box = new GroupBox {name = "ParentSetter"};
             if (prop.objectReferenceValue == null) return box;
+            
             var obj = new SerializedObject(prop.objectReferenceValue);
             box.AddToClassList("parent-setter");
-            var itr = obj.GetIterator();
-            if (itr.NextVisible(true))
-            {
-                do
+            
+            // if (prop.objectReferenceValue is BlockyDefaultParentSetter defaultParentSetter)
+            // {
+            //     defaultParentSetter.Parent = null;
+            //     var parentField = new ObjectField("Parent") { allowSceneObjects = true, objectType = typeof(GameObject) };
+            //     parentField.RegisterValueChangedCallback(changed =>
+            //     {
+            //         defaultParentSetter.Parent = changed.newValue as GameObject;
+            //     });
+            //     box.Add(parentField);
+            // }
+            // else
+            // {
+                var itr = obj.GetIterator();
+                if (itr.NextVisible(true))
                 {
-                    if (itr.name == "m_Script") continue;
-                    var field = new PropertyField(itr);
-                    field.Bind(obj);
-                    box.Add(field);
-                } while (itr.NextVisible(false));
-            }
+                    do
+                    {
+                        if (itr.name == "m_Script") continue;
+                        var field = new PropertyField(itr);
+                        field.Bind(obj);
+                        box.Add(field);
+                    } while (itr.NextVisible(false));
+                }
+            // }
 
             return box;
         }
+        
 
         private static List<BlockyParentSetter> GetParentSetters(SerializedObject obj, BlockyEditorWindow window)
         {
@@ -168,4 +192,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         private static List<BlockyPalette> GetPalettes() => AssetDatabase.FindAssets($"t:{nameof(BlockyPalette)}")
             .Select(guid => AssetDatabase.LoadAssetAtPath<BlockyPalette>(AssetDatabase.GUIDToAssetPath(guid))).ToList();
     }
+
+
 }

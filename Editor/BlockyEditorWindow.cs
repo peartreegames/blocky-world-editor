@@ -78,6 +78,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
             RefreshPalette();
             Repaint();
+            RefreshPalette();
+            Repaint();
         }
 
         private void OnBlockyModeChange(BlockyEditMode mode)
@@ -247,9 +249,10 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var prev = rootVisualElement.Q("Palette");
             if (prev != null) rootVisualElement.Remove(prev);
             var palette = _settings.palette;
-            if (palette == null) return;
-
+            if (palette == null || palette.Count == 0) return;
+            
             var buttons = new List<Button>();
+            
             foreach (var block in palette.Blocks)
             {
                 var button = new Button
@@ -270,8 +273,12 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             {
                 foreach (var btn in buttons) btn.RemoveFromClassList("preview-active");
                 if (button?.userData is not IBlockyPiece block) return;
-                _settings.Selected = block;
-                button.AddToClassList("preview-active");
+                if (_settings.Selected == block) _settings.Selected = null;
+                else
+                {
+                    _settings.Selected = block;
+                    button.AddToClassList("preview-active");
+                }
                 Repaint();
             }
 
@@ -322,7 +329,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var block = CurrentBlocky.GetPrefab(_map, key);
             if (block == null) throw new ArgumentNullException(nameof(block));
             block.transform.position = pos;
-            block.transform.rotation = Quaternion.Euler(_settings.rotation);
+            if (CurrentBlocky is not BlockyRuleSet) block.transform.rotation = Quaternion.Euler(_settings.rotation);
             var parent = _settings.parentSetter.GetParent(block);
             if (_settings.randomRotation && block.allowRandomRotation)
             {

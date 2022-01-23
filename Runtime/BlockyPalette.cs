@@ -8,6 +8,7 @@ namespace PeartreeGames.BlockyWorldEditor
     {
         public List<Object> blocks;
 
+        public int Count => blocks.Count;
         public List<IBlockyPiece> Blocks
         {
             get
