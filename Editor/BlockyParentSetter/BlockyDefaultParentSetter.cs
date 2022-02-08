@@ -6,7 +6,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
     public class BlockyDefaultParentSetter : BlockyParentSetter
     {
         [SerializeField]
-        [SceneObject("Parent")] 
+        [BlockySceneObject("Parent")] 
         private GameObject parent;
 
         public GameObject Parent { get; set; }

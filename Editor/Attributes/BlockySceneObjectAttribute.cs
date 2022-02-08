@@ -1,13 +1,12 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace PeartreeGames.BlockyWorldEditor.Editor
 {
-    public class SceneObjectAttribute : PropertyAttribute
+    public class BlockySceneObjectAttribute : PropertyAttribute
     {
         public readonly string backingPropertyName;
 
-        public SceneObjectAttribute(string backingPropertyName)
+        public BlockySceneObjectAttribute(string backingPropertyName)
         {
             this.backingPropertyName = backingPropertyName;
         }

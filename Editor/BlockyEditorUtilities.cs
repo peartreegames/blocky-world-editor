@@ -4,26 +4,14 @@ using UnityEngine;
 
 namespace PeartreeGames.BlockyWorldEditor.Editor
 {
-    public static class BlockyUtilities
+    public static class BlockyEditorUtilities
     {
-        public static float ClampAngle(float rotationY) => rotationY < 0 ? 360 - Mathf.Abs(rotationY) % 360 :
-            rotationY > 360 ? rotationY % 360 : rotationY;
-
-        public static Vector3Int SnapToGrid(Vector3 hit, int gridHeight, int gridSize = 1) =>
-            new(Mathf.RoundToInt(hit.x / gridSize) * gridSize, gridHeight,
-                Mathf.RoundToInt(hit.z / gridSize) * gridSize);
-
         public static void SetTargetVisualization(Vector3Int target, BlockyEditMode mode, int brushSize,
             bool isSquareDragging, List<Vector3Int> squareDraggingList, Vector3Int squareDragStart)
         {
             var originalColor = Handles.color;
             Handles.color = Event.current.control ? Color.red : Color.cyan;
             var gridSize = Vector3.one;
-            if (mode == BlockyEditMode.Paint)
-            {
-                // render placement prefab
-            }
-
             var offset = new Vector3(0, -0.5f, 0);
 
             if (isSquareDragging)
@@ -33,7 +21,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 {
                     Handles.DrawWireCube(pos + offset, gridSize);
                 }
-
                 Handles.color = originalColor;
                 return;
             }
@@ -81,7 +68,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var hPlane = new Plane(Vector3.up, Vector3.up * gridHeight);
             if (!hPlane.Raycast(ray, out var enter)) return false;
             var hit = ray.GetPoint(enter);
-            targetHit = SnapToGrid(hit, gridHeight);
+            targetHit = BlockyUtilities.SnapToGrid(hit, gridHeight);
             return true;
         }
 

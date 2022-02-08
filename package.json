@@ -1,23 +1,22 @@
 {
-    "name": "com.peartreegames.blockworldeditor",
-    "version": "0.1.3",
-    "displayName": "Blocky World Editor",
-    "description": "3D TileMap Editor",
-    "unity": "2021.2",
-    "unityRelease": "2f1",
-    "documentationUrl": "https://github.com/peartreegames/blocky-world-editor",
-    "changelogUrl": "https://github.com/peartreegames/blocky-world-editor/changelog.html",
-    "licensesUrl": "https://github.com/peartreegames/blocky-world-editor/licensing.html",
-    "dependencies": {
-      "com.unity.modules.uielements": "0.1.0"
-   },
-   "keywords": [
-      "peartree"
-    ],
-    "author": {
-      "name": "Peartree Games",
-      "email": "bgk@peartree.games",
-      "url": "https://peartree.games"
-    }
+  "name": "com.peartreegames.blockyworldeditor",
+  "version": "0.1.4",
+  "displayName": "Blocky World Editor",
+  "description": "3D TileMap Editor",
+  "unity": "2021.2",
+  "unityRelease": "2f1",
+  "documentationUrl": "https://github.com/peartreegames/blocky-world-editor",
+  "changelogUrl": "https://github.com/peartreegames/blocky-world-editor/changelog.html",
+  "licensesUrl": "https://github.com/peartreegames/blocky-world-editor/licensing.html",
+  "dependencies": {
+    "com.unity.modules.uielements": "0.1.0"
+  },
+  "keywords": [
+    "peartree"
+  ],
+  "author": {
+    "name": "Peartree Games",
+    "email": "bgk@peartree.games",
+    "url": "https://peartree.games"
   }
-  
+}

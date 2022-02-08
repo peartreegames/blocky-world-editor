@@ -43,6 +43,12 @@ Collection of BlockyObjects which will choose one at random. Good for landscapin
 
 To create your own ParentSetter create a new class derived from the BlockyParentSetter, which will return a Transform. This allows you to place your objects however you wish. See the [BlockyWorldStreamer](https://github.com/peartreegames/blocky-world-streamer/) for an example.
 
+### IBlockyScenePreprocessor
+
+When finishing painting it's convenient (and advised) to process a scene for optimizations or data collection. Any class which implements this interface will be called for all opened scenes when the mode changes.
+    
+    void ProcessScene(BlockyEditorWindow window, Scene scene);
+    void RevertScene(BlockyEditorWindow window, Scene scene);
 
 ## Hotkeys
 

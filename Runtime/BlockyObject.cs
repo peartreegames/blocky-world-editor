@@ -25,17 +25,20 @@ namespace PeartreeGames.BlockyWorldEditor
         public Texture2D GetTexture()
         {
 #if UNITY_EDITOR
-            var editor = UnityEditor.Editor.CreateEditor(gameObject);
+            var path = UnityEditor.AssetDatabase.GetAssetPath(gameObject);
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            var editor = UnityEditor.Editor.CreateEditor(prefab);
             Texture2D texture;
             try
             {
                 // Getting Failed to restore override lighting settings since upgrading to 2021.2.8f when compiling
                 // Must manually refresh after compiling, need to investigate further
-                texture = editor.RenderStaticPreview(UnityEditor.AssetDatabase.GetAssetPath(gameObject), null, 200, 200);
+                texture = editor.RenderStaticPreview(path, null, 200, 200);
                 if (texture == null) texture = Texture2D.grayTexture;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Debug.LogError(e);
                 texture = Texture2D.grayTexture;
             }
 

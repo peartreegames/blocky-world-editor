@@ -6,14 +6,14 @@ using UnityEngine.UIElements;
 
 namespace PeartreeGames.BlockyWorldEditor.Editor
 {
-    [CustomPropertyDrawer(typeof(SceneObjectAttribute))]
-    public class SceneObjectDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(BlockySceneObjectAttribute))]
+    public class BlockySceneObjectDrawer : PropertyDrawer
     {
         
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             var elem = new ObjectField(property.name) { allowSceneObjects = true, objectType = typeof(GameObject) };
-            var sceneObject = attribute as SceneObjectAttribute;
+            var sceneObject = attribute as BlockySceneObjectAttribute;
             elem.RegisterValueChangedCallback(changed =>
             {
                 var type = property.serializedObject.targetObject.GetType();

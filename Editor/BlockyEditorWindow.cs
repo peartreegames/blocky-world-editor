@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 
@@ -20,16 +21,13 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         private bool _isSquareDragging;
         private readonly List<Vector3Int> _draggingSquareList = new();
         private Vector3Int _dragStartPosition;
-
-        public static readonly Vector3 GridOffset = new(0.5f, 0, 0.5f);
         private IBlockyPiece CurrentBlocky => _settings == null ? null : _settings.Selected;
-        public Action<BlockyEditMode> onBlockyModeChange;
 
         private GameObject _placementObject;
         private Shader _placementShader;
         
 
-        [MenuItem("Window/BlockyEditor")]
+        [MenuItem("Tools/BlockyEditor")]
         private static void ShowWindow()
         {
             var window = GetWindow<BlockyEditorWindow>();
@@ -39,8 +37,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
         private void OnEnable()
         {
-            onBlockyModeChange = delegate {  };
-            onBlockyModeChange += OnBlockyModeChange;
+            EditorSceneManager.sceneClosing += OnSceneClosing;
             _placementShader = Shader.Find("Blocky/Placement");
             PopulateMap();
             if (_settings == null)
@@ -70,7 +67,9 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                         .First(a => a is BlockyParentSetter) as BlockyParentSetter;
                 
             }
-            if (_serializedSettings == null) _serializedSettings = new SerializedObject(_settings);
+
+            _settings.editMode = BlockyEditMode.None;
+            _serializedSettings ??= new SerializedObject(_settings);
             _serializedSettings.ApplyModifiedProperties();
             rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("BlockyEditor"));
             var settingsView = new BlockySettingsElement(this, _serializedSettings);
@@ -78,17 +77,59 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
             RefreshPalette();
             Repaint();
-            RefreshPalette();
-            Repaint();
         }
 
-        private void OnBlockyModeChange(BlockyEditMode mode)
+        private void OnDisable()
         {
-            if (mode != BlockyEditMode.Paint && _placementObject != null)
+            EditorSceneManager.sceneClosing -= OnSceneClosing;
+        }
+
+        private void OnSceneClosing(Scene scene, bool removingScene)
+        {
+            if (_settings.editMode == BlockyEditMode.None) return;
+            // In Painting/Selection mode while scene is closing, process the scenes beforehand
+            var preprocessors = GetScenePreprocessors();
+            foreach(var preprocessor in preprocessors) preprocessor.ProcessScene(this, scene);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+        }
+
+        public void OnBlockyModeChange(BlockyEditMode mode)
+        {
+            var preprocessors = GetScenePreprocessors();
+            var openSceneCount = SceneManager.sceneCount;
+            if (mode == BlockyEditMode.None)
             {
-                DestroyImmediate(_placementObject);
+                if (_placementObject != null) DestroyImmediate(_placementObject);
+                for (var i = 0; i < openSceneCount; i++)
+                {
+                    var scene = SceneManager.GetSceneAt(i);
+                    foreach(var preprocessor in preprocessors) preprocessor.ProcessScene(this, scene);
+                }
                 EditorSceneManager.MarkAllScenesDirty();
+                EditorSceneManager.SaveOpenScenes();
             }
+            else
+            {
+                for (var i = 0; i < openSceneCount; i++)
+                {
+                    var scene = SceneManager.GetSceneAt(i);
+                    foreach (var preprocessor in preprocessors) preprocessor.RevertScene(this, scene);
+                }
+            }
+        }
+
+        private static List<IBlockyScenePreprocessor> GetScenePreprocessors()
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var results = new List<IBlockyScenePreprocessor>();
+            foreach (var assembly in assemblies)
+            {
+                var preprocessors = assembly.GetTypes()
+                    .Where(t => !t.IsAbstract && t.GetInterfaces().Contains(typeof(IBlockyScenePreprocessor))).Select(t => (IBlockyScenePreprocessor) Activator.CreateInstance(t)).ToList();
+                results.AddRange(preprocessors);
+            }
+            return results;
         }
 
 
@@ -120,12 +161,12 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         private void OnSceneGUI(SceneView sceneView)
         {
             if (_settings.editMode == BlockyEditMode.None) return;
-            if (!BlockyUtilities.TryGetTargetPoint(Event.current.mousePosition, _settings.gridHeight,
+            if (!BlockyEditorUtilities.TryGetTargetPoint(Event.current.mousePosition, _settings.gridHeight,
                     out _settings.target)) return;
-            BlockyUtilities.SetTargetVisualization(_settings.target, _settings.editMode, _settings.brushSize,
+            BlockyEditorUtilities.SetTargetVisualization(_settings.target, _settings.editMode, _settings.brushSize,
                 _isSquareDragging, _draggingSquareList, _dragStartPosition);
-            BlockyUtilities.SetPlacementVisualization(_settings.target, _settings.rotation, _settings.editMode, CurrentBlocky, _placementShader, ref _placementObject);
-            _settings.parentSetter.SetBoundsVisualization(_settings.target, _settings.gridHeight);
+            BlockyEditorUtilities.SetPlacementVisualization(_settings.target, _settings.rotation, _settings.editMode, CurrentBlocky, _placementShader, ref _placementObject);
+            _settings.parentSetter.SetVisualization(_settings.target, _settings.gridHeight);
             
             HandleInput(_settings.target);
             HandleUtility.Repaint();

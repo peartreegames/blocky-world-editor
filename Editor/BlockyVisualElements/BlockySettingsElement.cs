@@ -64,7 +64,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             {
                 serializedParentSetterProperty.objectReferenceValue =
                     parentSetters.Find(p => p.GetType().Name == change.newValue);
-                ((BlockyParentSetter)serializedParentSetterProperty.objectReferenceValue).Init(window); 
                 serializedSettings.ApplyModifiedProperties();
                 serializedParentSetterProperty = serializedSettings.FindProperty("parentSetter");
                 var prev = placement.Q("ParentSetter");
@@ -103,16 +102,15 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             paintButton.RegisterValueChangedCallback(c =>
             {
                 settings.editMode = c.newValue ? BlockyEditMode.Paint : BlockyEditMode.None;
-                ((BlockyParentSetter)serializedParentSetterProperty.objectReferenceValue).Init(window);
-                window.onBlockyModeChange?.Invoke(settings.editMode);
                 window.PopulateMap();
+                window.OnBlockyModeChange(settings.editMode);
                 selectButton.SetValueWithoutNotify(false);
             });
             selectButton.RegisterValueChangedCallback(c =>
             {
                 settings.editMode = c.newValue ? BlockyEditMode.Select : BlockyEditMode.None;
-                window.onBlockyModeChange?.Invoke(settings.editMode);
                 window.PopulateMap();
+                window.OnBlockyModeChange(settings.editMode);
                 paintButton.SetValueWithoutNotify(false);
             });
             modes.Add(paintButton);
@@ -134,30 +132,34 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var obj = new SerializedObject(prop.objectReferenceValue);
             box.AddToClassList("parent-setter");
             
-            // if (prop.objectReferenceValue is BlockyDefaultParentSetter defaultParentSetter)
-            // {
-            //     defaultParentSetter.Parent = null;
-            //     var parentField = new ObjectField("Parent") { allowSceneObjects = true, objectType = typeof(GameObject) };
-            //     parentField.RegisterValueChangedCallback(changed =>
-            //     {
-            //         defaultParentSetter.Parent = changed.newValue as GameObject;
-            //     });
-            //     box.Add(parentField);
-            // }
-            // else
-            // {
-                var itr = obj.GetIterator();
-                if (itr.NextVisible(true))
+            var itr = obj.GetIterator();
+            if (itr.NextVisible(true))
+            {
+                do
                 {
-                    do
-                    {
-                        if (itr.name == "m_Script") continue;
-                        var field = new PropertyField(itr);
-                        field.Bind(obj);
-                        box.Add(field);
-                    } while (itr.NextVisible(false));
-                }
-            // }
+                    if (itr.name == "m_Script") continue;
+                    var field = new PropertyField(itr);
+                    field.Bind(obj);
+                    box.Add(field);
+                } while (itr.NextVisible(false));
+            }
+
+            var methods = prop.objectReferenceValue.GetType().GetMethods().Where(m => m.GetCustomAttributes(typeof(BlockyButtonAttribute), true).Length > 0).ToList();
+            foreach (var method in methods)
+            {
+                if (method.GetParameters().Length > 0) continue;
+                var label =
+                    ((BlockyButtonAttribute) method.GetCustomAttributes(typeof(BlockyButtonAttribute), false)[0]).label;
+                var button = new Button(() =>
+                {
+                    method.Invoke(prop.objectReferenceValue, null);
+                })
+                {
+                    text = label ?? method.Name
+                };
+
+                box.Add(button);
+            }
 
             return box;
         }
@@ -179,7 +181,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
             foreach (var result in parentSetterClasses)
             {
-                result.Init(window);
                 if (Array.Exists(subAssets, sub => sub.GetType().Name == result.GetType().Name)) continue;
                 result.name = result.GetType().Name;
                 AssetDatabase.AddObjectToAsset(result, obj.targetObject);
