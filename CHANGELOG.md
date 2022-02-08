@@ -1,3 +1,7 @@
+#### 0.1.4 (2022-02-08)
+
+- Add IBlockyScenePreprocessor interface
+
 #### 0.1.3 (2022-01-23)
 
 - Fix default parent setter scene reference
