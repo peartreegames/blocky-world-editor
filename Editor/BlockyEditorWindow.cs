@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.EditorCoroutines.Editor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -290,10 +292,14 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var prev = rootVisualElement.Q("Palette");
             if (prev != null) rootVisualElement.Remove(prev);
             var palette = _settings.palette;
-            if (palette == null || palette.Count == 0) return;
+            EditorCoroutineUtility.StartCoroutine(CreatePreviewIcons(palette, container), this);
+        }
+
+        private IEnumerator CreatePreviewIcons(BlockyPalette palette, VisualElement container)
+        {
+            if (palette == null || palette.Count == 0) yield break;
             
             var buttons = new List<Button>();
-            
             foreach (var block in palette.Blocks)
             {
                 var button = new Button
@@ -302,7 +308,16 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 };
                 buttons.Add(button);
                 button.AddToClassList("preview");
-                var texture = block.GetTexture();
+                Texture2D texture = null;
+                var count = 0;
+                // in case GetTexture isn't implemented we'll add a failsafe count
+                while (texture == null && count < 10)
+                {
+                    texture = block.GetTexture();
+                    count++;
+                    yield return null;
+                }
+                
                 var img = new Image {image = texture};
                 img.AddToClassList("preview");
                 button.Add(img);
@@ -322,7 +337,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 }
                 Repaint();
             }
-
             container.AddManipulator(new Clickable(() => { SelectButton(null); }));
             foreach (var btn in buttons) btn.RegisterCallback<ClickEvent>(_ => SelectButton(btn));
             rootVisualElement.Insert(1, container);

@@ -1,6 +1,6 @@
 {
   "name": "com.peartreegames.blockyworldeditor",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "displayName": "Blocky World Editor",
   "description": "3D TileMap Editor",
   "unity": "2021.2",
@@ -9,7 +9,8 @@
   "changelogUrl": "https://github.com/peartreegames/blocky-world-editor/changelog.html",
   "licensesUrl": "https://github.com/peartreegames/blocky-world-editor/licensing.html",
   "dependencies": {
-    "com.unity.modules.uielements": "0.1.0"
+    "com.unity.modules.uielements": "0.1.0",
+    "com.unity.editorcoroutines": "1.0.0"
   },
   "keywords": [
     "peartree"

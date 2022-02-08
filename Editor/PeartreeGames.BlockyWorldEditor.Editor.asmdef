@@ -5,7 +5,8 @@
     "PeartreeGames.BlockyWorldEditor",
     "Unity.Addressables",
     "Unity.Addressables.Editor",
-    "Unity.ResourceManager"
+    "Unity.ResourceManager",
+    "Unity.EditorCoroutines.Editor"
   ],
   "includePlatforms": [
     "Editor"
