@@ -81,6 +81,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 Object.DestroyImmediate(placementObject);
                 placementObject = Object.Instantiate(current.GetPlacement());
                 placementObject.name = $"PLACEMENT_{current.Name}";
+                placementObject.layer = LayerMask.NameToLayer("Ignore Raycast");
                 var rends = placementObject.GetComponentsInChildren<MeshRenderer>();
                 if (rends.Length > 0)
                 {

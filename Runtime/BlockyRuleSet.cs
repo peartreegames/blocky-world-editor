@@ -15,9 +15,10 @@ namespace PeartreeGames.BlockyWorldEditor
         [SerializeField] private GameObject defaultBlock;
         public List<BlockyRule> rules;
         [SerializeField] private Texture2D thumbnail;
-        public string Name => name;
+        public string Name => this == null ? null : name;
         public BlockyObject GetPrefab(BlockyObjectMap map, BlockyObjectKey key)
         {
+            #if UNITY_EDITOR
             var neighbours = BlockyRule.Neighbours.Select(p =>
                 map.TryGetValue(new BlockyObjectKey(key.Cell + p, key.Layer), out var block) ? block : null).ToArray();
             BlockyObject result = null;
@@ -89,6 +90,9 @@ namespace PeartreeGames.BlockyWorldEditor
             var behaviour = prefab.gameObject.AddComponent<BlockyRuleBehaviour>();
             behaviour.ruleSet = this;
             return prefab;
+            #else
+            return null;
+            #endif
         }
 
         public GameObject GetPlacement() => defaultBlock;

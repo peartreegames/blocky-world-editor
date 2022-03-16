@@ -100,6 +100,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         {
             var preprocessors = GetScenePreprocessors();
             var openSceneCount = SceneManager.sceneCount;
+            
             if (mode == BlockyEditMode.None)
             {
                 if (_placementObject != null) DestroyImmediate(_placementObject);
@@ -118,6 +119,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     var scene = SceneManager.GetSceneAt(i);
                     foreach (var preprocessor in preprocessors) preprocessor.RevertScene(this, scene);
                 }
+                EditorSceneManager.MarkAllScenesDirty();
             }
         }
 
@@ -131,6 +133,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     .Where(t => !t.IsAbstract && t.GetInterfaces().Contains(typeof(IBlockyScenePreprocessor))).Select(t => (IBlockyScenePreprocessor) Activator.CreateInstance(t)).ToList();
                 results.AddRange(preprocessors);
             }
+            results.Sort((a, b) => b.Order - a.Order);
             return results;
         }
 
@@ -413,7 +416,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     update.transform.position = existingTransform.position;
                     update.transform.SetParent(existingTransform.parent);
                     _map.Add(update);
-                    DestroyImmediate(existingBlock.gameObject);
                 }
             }
         }

@@ -102,25 +102,25 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             paintButton.RegisterValueChangedCallback(c =>
             {
                 settings.editMode = c.newValue ? BlockyEditMode.Paint : BlockyEditMode.None;
-                window.PopulateMap();
                 window.OnBlockyModeChange(settings.editMode);
                 selectButton.SetValueWithoutNotify(false);
+                window.PopulateMap();
             });
             selectButton.RegisterValueChangedCallback(c =>
             {
                 settings.editMode = c.newValue ? BlockyEditMode.Select : BlockyEditMode.None;
-                window.PopulateMap();
                 window.OnBlockyModeChange(settings.editMode);
                 paintButton.SetValueWithoutNotify(false);
+                window.PopulateMap();
             });
             modes.Add(paintButton);
             modes.Add(selectButton);
 
 
             var settingsView = new GroupBox();
-            settingsView.Add(paletteDropdown);
             settingsView.Add(placement);
             settingsView.Add(modes);
+            settingsView.Add(paletteDropdown);
             contentContainer.Add(settingsView);
         }
 

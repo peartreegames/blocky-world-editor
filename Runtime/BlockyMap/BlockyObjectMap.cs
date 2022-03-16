@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using UnityEditor.SceneManagement;
+using UnityEngine;
 
 namespace PeartreeGames.BlockyWorldEditor
 {
@@ -7,9 +7,15 @@ namespace PeartreeGames.BlockyWorldEditor
     {
         public void Add(BlockyObject obj)
         {
-            if (PrefabStageUtility.GetCurrentPrefabStage() != null) return;
+#if UNITY_EDITOR
+            if (UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null) return;
+#endif
             var key = new BlockyObjectKey(obj);
-            if (base.TryGetValue(key, out _)) this[key] = obj;
+            if (base.TryGetValue(key, out var prev))
+            {
+                Object.DestroyImmediate(prev.gameObject);
+                this[key] = obj;
+            }
             else Add(key, obj);
         }
 
@@ -18,6 +24,7 @@ namespace PeartreeGames.BlockyWorldEditor
 
         public bool TryGetValue(BlockyObject blocky, out BlockyObject obj) =>
             TryGetValue(new BlockyObjectKey(blocky), out obj);
+
         public new bool TryGetValue(BlockyObjectKey key, out BlockyObject obj)
         {
             if (!base.TryGetValue(key, out obj)) return false;
