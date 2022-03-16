@@ -5,6 +5,7 @@ Code from "Creating a 3D Tilemap Editor and World Builder in Unity" [YouTube vid
 
 ## Installation
 
+Requires Unity 2021.2+
 Can be installed via the Package Manager > Add Package From Git URL...
 `https://github.com/peartreegames/blocky-world-editor.git`
 
@@ -48,7 +49,7 @@ To create your own ParentSetter create a new class derived from the BlockyParent
 ### IBlockyScenePreprocessor
 
 When finishing painting it's convenient (and advised) to process a scene for optimizations or data collection. Any class which implements this interface will be called for all opened scenes when the mode changes.
-    
+
     void ProcessScene(BlockyEditorWindow window, Scene scene);
     void RevertScene(BlockyEditorWindow window, Scene scene);
 
