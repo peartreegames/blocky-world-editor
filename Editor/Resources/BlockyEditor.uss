@@ -12,17 +12,19 @@
     flex-direction: row;
     flex-wrap: wrap;
     padding: 10px;
-    width: 100%;
     background-color: #2d2d2d;
     position: relative;
 }
-
+.preview-scroll {
+    flex-grow: 1;
+}
 .preview {
     -unity-background-scale-mode: scale-to-fit;
     min-width: 80px;
     max-width: 100px;
     min-height: 100px;
     max-height: 120px;
+    border-width: 2px;
 }
 
 .preview-label {

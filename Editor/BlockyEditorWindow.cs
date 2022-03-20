@@ -290,11 +290,21 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
         public void RefreshPalette()
         {
-            var container = new GroupBox {name = "Palette", style = {position = Position.Relative}};
-            container.AddToClassList("preview-container");
+            var scroll = new ScrollView
+            {
+                name = "Palette",
+                horizontalScrollerVisibility = ScrollerVisibility.Hidden,
+                verticalScrollerVisibility = ScrollerVisibility.AlwaysVisible
+            };
+            scroll.AddToClassList("preview-scroll");
             var prev = rootVisualElement.Q("Palette");
             if (prev != null) rootVisualElement.Remove(prev);
+            
+            var container = new GroupBox {style = {position = Position.Relative}};
+            container.AddToClassList("preview-container");
+            scroll.Add(container);
             var palette = _settings.palette;
+            rootVisualElement.Insert(1, scroll);
             EditorCoroutineUtility.StartCoroutine(CreatePreviewIcons(palette, container), this);
         }
 
@@ -342,7 +352,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             }
             container.AddManipulator(new Clickable(() => { SelectButton(null); }));
             foreach (var btn in buttons) btn.RegisterCallback<ClickEvent>(_ => SelectButton(btn));
-            rootVisualElement.Insert(1, container);
+
         }
 
         private void RemoveBlockySelection(Vector3Int pos)
