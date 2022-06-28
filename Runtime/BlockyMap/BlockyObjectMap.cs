@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace PeartreeGames.BlockyWorldEditor
 {
     public class BlockyObjectMap : Dictionary<BlockyObjectKey, BlockyObject>
     {
-        public void Add(BlockyObject obj)
+        public void Add(BlockyObject obj, bool useUndo = false)
         {
 #if UNITY_EDITOR
             if (UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null) return;
@@ -13,7 +14,11 @@ namespace PeartreeGames.BlockyWorldEditor
             var key = new BlockyObjectKey(obj);
             if (base.TryGetValue(key, out var prev))
             {
-                Object.DestroyImmediate(prev.gameObject);
+                if (prev != null)
+                {
+                    if (useUndo) Undo.DestroyObjectImmediate(prev.gameObject); 
+                    else Object.DestroyImmediate(prev.gameObject);   
+                }
                 this[key] = obj;
             }
             else Add(key, obj);

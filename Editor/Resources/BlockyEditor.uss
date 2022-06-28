@@ -72,3 +72,7 @@
 .parent-override {
     background-color: #770000;
 }
+
+.toggle {
+    align-self: flex-start;
+}

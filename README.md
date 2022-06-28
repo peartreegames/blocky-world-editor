@@ -69,7 +69,16 @@ When finishing painting it's convenient (and advised) to process a scene for opt
 
 BlockyObjects have a "allowRandomRotation" flag, when using RandomRotation in the editor only those set will be rotated, otherwise will be set to the current rotation (or BlockyParentSetter's rotation).
 
+## Undo/Redo
+
+A "Use Undo/Redo" toggle is now available in Edit > Preferences > Blocky Editor
+
+I've decided to keep it out of the regular settings in the Editor Window since it is a User Preference rather than a Placement Setting.
+
+Using Undo/Redo support may cause the placements to lag a bit when square dragging very large areas
+
 ## Todo
   - [x] Implement random rotation
   - [x] Implement placement visualization
   - [ ] Better refresh (editor/palettes) on changes
+  - [x] Undo/Redo support
