@@ -1,6 +1,6 @@
 {
   "name": "com.peartreegames.blockyworldeditor",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "displayName": "Blocky World Editor",
   "description": "3D TileMap Editor",
   "unity": "2021.2",

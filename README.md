@@ -77,6 +77,19 @@ I've decided to keep it out of the regular settings in the Editor Window since i
 
 Using Undo/Redo support may cause the placements to lag a bit when square dragging very large areas
 
+## World Position Toolbar
+
+There was a bug with the custom `TransformEditor` that was brought to my attention (Thank you Rev!), 
+I've removed it entirely and replaced it with a dockable toolbar [Overlay](https://docs.unity3d.com/Manual/overlays.html).
+
+![docked](Documentation/world_position.png)
+
+![floating](Documentation/world_position_floating.png)
+
+It can be enabled or disabled from the Overlay menu by pressing Space while focused on the SceneView
+
+![Overlay Menu](Documentation/overlay_menu.png)
+
 ## Todo
   - [x] Implement random rotation
   - [x] Implement placement visualization
