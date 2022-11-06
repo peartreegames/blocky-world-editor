@@ -70,10 +70,13 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
         private void OnSceneClosing(Scene scene, bool removingScene)
         {
+            if (_placementObject != null) DestroyImmediate(_placementObject);
             if (_settings.editMode == BlockyEditMode.None) return;
+
             // In Painting/Selection mode while scene is closing, process the scenes beforehand
             var preprocessors = GetScenePreprocessors();
             foreach (var preprocessor in preprocessors) preprocessor.ProcessScene(this, scene);
+
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
         }
@@ -85,7 +88,6 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
             if (mode == BlockyEditMode.None)
             {
-                if (_placementObject != null) DestroyImmediate(_placementObject);
                 for (var i = 0; i < openSceneCount; i++)
                 {
                     var scene = SceneManager.GetSceneAt(i);
