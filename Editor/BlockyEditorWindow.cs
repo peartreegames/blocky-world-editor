@@ -240,7 +240,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             
             if (CurrentBlocky == null)
             {
-                Debug.Log("No BlockyObject Selected from Palette.");
+                Debug.LogWarning("No BlockyObject Selected from Palette.");
                 return;
             }
 
