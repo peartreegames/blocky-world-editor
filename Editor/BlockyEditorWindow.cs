@@ -236,7 +236,13 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            if (action == null || evt.button != decimal.Zero || CurrentBlocky == null) return;
+            if (action == null || evt.button != decimal.Zero) return;
+            
+            if (CurrentBlocky == null)
+            {
+                Debug.Log("No BlockyObject Selected from Palette.");
+                return;
+            }
 
             Undo.IncrementCurrentGroup();
             _undoGroup = _draggingSet.Count == 0 ? Undo.GetCurrentGroup() : _undoGroup;
