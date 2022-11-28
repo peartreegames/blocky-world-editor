@@ -16,8 +16,12 @@ namespace PeartreeGames.BlockyWorldEditor
             {
                 if (prev != null)
                 {
+                    #if UNITY_EDITOR
                     if (useUndo) Undo.DestroyObjectImmediate(prev.gameObject); 
-                    else Object.DestroyImmediate(prev.gameObject);   
+                    
+                    else 
+                    #endif
+                        Object.DestroyImmediate(prev.gameObject);   
                 }
                 this[key] = obj;
             }

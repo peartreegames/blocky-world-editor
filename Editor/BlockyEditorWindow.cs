@@ -166,9 +166,18 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             HandleUtility.Repaint();
         }
 
+        private bool _isControllingCamera;
         private void HandleInput(Vector3Int target)
         {
             var evt = Event.current;
+            _isControllingCamera = evt.type switch
+            {
+                EventType.MouseDown when evt.button == 1 => true,
+                EventType.MouseUp when evt.button == 1 => false,
+                _ => _isControllingCamera
+            };
+            
+            if (_isControllingCamera) return;
             if (evt.type == EventType.KeyDown)
             {
                 switch (evt.keyCode)
