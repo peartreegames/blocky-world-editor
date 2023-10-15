@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -40,6 +41,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         private void OnEnable()
         {
             EditorSceneManager.sceneClosing += OnSceneClosing;
+            EditorApplication.playModeStateChanged += OnPlaymodeChange;
             if (_settings == null) _settings = BlockyEditorSettings.GetOrCreateSettings();
             if (_settings.useUndo) Undo.undoRedoPerformed += PopulateMap;
 
@@ -62,10 +64,16 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             Repaint();
         }
 
+        private void OnPlaymodeChange(PlayModeStateChange obj)
+        {
+            if (obj == PlayModeStateChange.EnteredEditMode) RefreshPalette();
+        }
+
         private void OnDisable()
         {
             if (_settings.useUndo) Undo.undoRedoPerformed -= PopulateMap;
             EditorSceneManager.sceneClosing -= OnSceneClosing;
+            EditorApplication.playModeStateChanged -= OnPlaymodeChange;
         }
 
         private void OnSceneClosing(Scene scene, bool removingScene)
@@ -305,19 +313,21 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             scroll.AddToClassList("preview-scroll");
             var prev = rootVisualElement.Q("Palette");
             if (prev != null) rootVisualElement.Remove(prev);
-
+            
             var container = new GroupBox {style = {position = Position.Relative}};
             container.AddToClassList("preview-container");
-            scroll.Add(container);
             var palette = _settings.palette;
+            if (palette == null || palette.Count == 0) return;
+
+            var paletteInspector = new InspectorElement(_settings.palette);
+            scroll.Add(paletteInspector);
+            scroll.Add(container);
             rootVisualElement.Insert(1, scroll);
             EditorCoroutineUtility.StartCoroutine(CreatePreviewIcons(palette, container), this);
         }
 
         private IEnumerator CreatePreviewIcons(BlockyPalette palette, VisualElement container)
         {
-            if (palette == null || palette.Count == 0) yield break;
-
             var buttons = new List<Button>();
             foreach (var block in palette.Blocks)
             {
@@ -330,7 +340,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 Texture2D texture = null;
                 var count = 0;
                 // in case GetTexture isn't implemented we'll add a failsafe count
-                while (texture == null && count < 10)
+                while (texture == null && count < 20)
                 {
                     texture = block.GetTexture();
                     count++;

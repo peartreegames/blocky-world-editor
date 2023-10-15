@@ -1,0 +1,12 @@
+﻿.unity-list-view__reorderable-item .unity-label {
+    display: none;
+}
+
+.unity-object-field-display .unity-label {
+    display: flex;
+}
+
+.palette-list .unity-foldout__input {
+    justify-content: flex-start;
+}
+

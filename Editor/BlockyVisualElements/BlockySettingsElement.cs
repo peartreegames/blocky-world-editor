@@ -15,7 +15,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         {
             var settings = (BlockyEditorSettings) serializedSettings.targetObject;
             var palettes = GetPalettes();
-            var paletteDropdown = new DropdownField()
+            var paletteDropdown = new DropdownField
             {
                 choices = palettes.Select(palette => palette.name).ToList(),
                 value = settings.palette == null
@@ -38,7 +38,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
             var serializedParentSetterProperty = serializedSettings.FindProperty("parentSetter");
             var parentSetters = GetParentSetters(serializedSettings, window);
-            var parentSetterDropdown = new DropdownField()
+            var parentSetterDropdown = new DropdownField
             {
                 choices = parentSetters.Select(p => p.GetType().Name).ToList(),
                 value = parentSetters.Find(p =>
@@ -97,8 +97,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             placement.Add(brushSize);
 
             var modes = new GroupBox();
-            var paintButton = new ToolbarToggle() {text = "Paint"};
-            var selectButton = new ToolbarToggle() {text = "Select"};
+            var paintButton = new ToolbarToggle {text = "Paint"};
+            var selectButton = new ToolbarToggle {text = "Select"};
             paintButton.RegisterValueChangedCallback(c =>
             {
                 settings.editMode = c.newValue ? BlockyEditMode.Paint : BlockyEditMode.None;
@@ -121,6 +121,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             settingsView.Add(placement);
             settingsView.Add(modes);
             settingsView.Add(paletteDropdown);
+            settingsView.Add(new Button(window.RefreshPalette){ text = "Refresh" });
             contentContainer.Add(settingsView);
         }
 
