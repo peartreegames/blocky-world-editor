@@ -65,6 +65,10 @@ When finishing painting it's convenient (and advised) to process a scene for opt
 | 1-4 | Brush Size |
 | +/- | Increase/Decrease Brush Size |
 
+## Inspector Selection
+
+Hold `ctrl` when selecting an item from the palette to display it in the inspector.
+
 ## Notes
 
 BlockyObjects have a "allowRandomRotation" flag, when using RandomRotation in the editor only those set will be rotated, otherwise will be set to the current rotation (or BlockyParentSetter's rotation).
@@ -81,6 +85,7 @@ Using Undo/Redo support may cause the placements to lag a bit when square draggi
 
 There was a bug with the custom `TransformEditor` that was brought to my attention (Thank you Rev!), 
 I've removed it entirely and replaced it with a dockable toolbar [Overlay](https://docs.unity3d.com/Manual/overlays.html).
+
 
 ![docked](Documentation/world_position.png)
 

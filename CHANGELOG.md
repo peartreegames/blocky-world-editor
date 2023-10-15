@@ -1,3 +1,24 @@
+#### 0.1.8 (2023-10-15)
+
+- Add Palette block list to editor
+- Add Inspector selection from palette
+
+#### 0.1.7 (2022-11-28)
+
+- Add ScrollView to palette
+- Add undo/redo support
+- Replace TransformEditor with Toolbar
+- Allow camera flying
+- Add no object selected when painting
+
+#### 0.1.6 (2022-03-16)
+
+- Fix palette dropdown placement
+
+#### 0.1.5 (2022-02-08)
+ 
+- Fix preview loading
+
 #### 0.1.4 (2022-02-08)
 
 - Add IBlockyScenePreprocessor interface

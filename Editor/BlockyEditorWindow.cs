@@ -318,9 +318,12 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             container.AddToClassList("preview-container");
             var palette = _settings.palette;
             if (palette == null || palette.Count == 0) return;
-
             var paletteInspector = new InspectorElement(_settings.palette);
             scroll.Add(paletteInspector);
+            
+            var layerLabel = new Label { name = "LayerLabel"};
+            layerLabel.AddToClassList("layer-label");
+            scroll.Add(layerLabel);
             scroll.Add(container);
             rootVisualElement.Insert(1, scroll);
             EditorCoroutineUtility.StartCoroutine(CreatePreviewIcons(palette, container), this);
@@ -354,7 +357,11 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 container.Add(button);
             }
 
-            void SelectButton(VisualElement button)
+            container.AddManipulator(new Clickable(() => { SelectButton(null, null); }));
+            foreach (var btn in buttons) btn.RegisterCallback<ClickEvent>(evt => SelectButton(evt, btn));
+            yield break;
+
+            void SelectButton(ClickEvent evt, VisualElement button)
             {
                 foreach (var btn in buttons) btn.RemoveFromClassList("preview-active");
                 if (button?.userData is not IBlockyPiece block) return;
@@ -362,14 +369,23 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 else
                 {
                     _settings.Selected = block;
+                    var layerLabel = container.parent.Q<Label>("LayerLabel");
+                    layerLabel.text = $"Layer: {block.Layer.name}";
                     button.AddToClassList("preview-active");
+                    if (evt.ctrlKey)
+                    {
+                        Selection.activeObject = block switch
+                        {
+                            BlockyObject obj => obj,
+                            BlockyRuleSet rule => rule,
+                            BlockyRandomizer rnd => rnd,
+                            _ => Selection.activeObject
+                        };
+                    }
                 }
 
                 Repaint();
             }
-
-            container.AddManipulator(new Clickable(() => { SelectButton(null); }));
-            foreach (var btn in buttons) btn.RegisterCallback<ClickEvent>(_ => SelectButton(btn));
         }
 
         private void RemoveBlockySelection(Vector3Int pos, int undoGroup)

@@ -76,3 +76,8 @@
 .toggle {
     align-self: flex-start;
 }
+
+.layer-label {
+    background-color: #2d2d2d;
+    padding: 5px;
+}
