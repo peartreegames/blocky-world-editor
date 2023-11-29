@@ -22,7 +22,7 @@ namespace PeartreeGames.BlockyWorldEditor
 
         public GameObject GetPlacement() => gameObject;
 
-        public Texture2D GetTexture()
+        public virtual Texture2D GetTexture()
         {
 #if UNITY_EDITOR
             // Getting Failed to restore override lighting settings 
