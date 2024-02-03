@@ -12,12 +12,14 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            var elem = new ObjectField(property.name) { allowSceneObjects = true, objectType = typeof(GameObject) };
+            var elem = new ObjectField(property.name)
+                {allowSceneObjects = true, objectType = typeof(GameObject)};
             var sceneObject = attribute as BlockySceneObjectAttribute;
             elem.RegisterValueChangedCallback(changed =>
             {
                 var type = property.serializedObject.targetObject.GetType();
-                type.GetProperty(sceneObject.backingPropertyName)?.SetValue(property.serializedObject.targetObject, changed.newValue);
+                type.GetProperty(sceneObject.backingPropertyName)
+                    ?.SetValue(property.serializedObject.targetObject, changed.newValue);
             });
             return elem;
         }

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -29,6 +30,9 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         private GameObject _placementObject;
         private Shader _placementShader;
         private int _undoGroup;
+        private string _parentCache;
+        private VisualElement _playButton;
+        private VisualElement _settingsView;
 
         [MenuItem("Tools/Blocky/Editor")]
         private static void ShowWindow()
@@ -57,17 +61,40 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             _settings.editMode = BlockyEditMode.None;
             _serializedSettings ??= new SerializedObject(_settings);
             _serializedSettings.ApplyModifiedProperties();
-            rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("BlockyEditor"));
-            var settingsView = new BlockySettingsElement(this, _serializedSettings);
-            rootVisualElement.Add(settingsView);
+            var stylesheet = Resources.Load<StyleSheet>("BlockyEditor");
+            rootVisualElement.styleSheets.Add(stylesheet);
+            _settingsView ??= new BlockySettingsElement(this, _serializedSettings);
+            rootVisualElement.Add(_settingsView);
             RefreshPalette();
             Repaint();
+            
+            var toolbarType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.Toolbar");
+            var toolbars = Resources.FindObjectsOfTypeAll(toolbarType);
+            var currentToolbar = toolbars.Length > 0 ? (ScriptableObject) toolbars[0] : null;
+            var guiViewType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.GUIView");
+            var iWindowBackendType =
+                typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.IWindowBackend");
+            var guiBackend = guiViewType.GetProperty("windowBackend",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var viewVisualTree = iWindowBackendType.GetProperty("visualTree",
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            var windowBackend = guiBackend.GetValue(currentToolbar);
+            var toolbarElement = (VisualElement) viewVisualTree.GetValue(windowBackend, null);
+            _playButton = toolbarElement.Q("Play");
         }
 
         private void OnPlaymodeChange(PlayModeStateChange obj)
         {
-            if (obj == PlayModeStateChange.EnteredEditMode) RefreshPalette();
+            switch (obj)
+            {
+                case PlayModeStateChange.EnteredEditMode:
+                    RefreshPalette();
+                    break;
+                case PlayModeStateChange.ExitingEditMode:
+                    break;
+            }
         }
+
 
         private void OnDisable()
         {
@@ -94,12 +121,18 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var preprocessors = GetScenePreprocessors();
             var openSceneCount = SceneManager.sceneCount;
 
+            
             if (mode == BlockyEditMode.None)
             {
+                _playButton.SetEnabled(true);
+                _playButton.style.borderBottomColor = new StyleColor(Color.clear);
+                _playButton.style.borderTopColor = new StyleColor(Color.clear);
+                _playButton.tooltip = "Play";
                 for (var i = 0; i < openSceneCount; i++)
                 {
                     var scene = SceneManager.GetSceneAt(i);
-                    foreach (var preprocessor in preprocessors) preprocessor.ProcessScene(this, scene);
+                    foreach (var preprocessor in preprocessors)
+                        preprocessor.ProcessScene(this, scene);
                 }
 
                 EditorSceneManager.MarkAllScenesDirty();
@@ -107,10 +140,15 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             }
             else
             {
+                _playButton.style.borderTopColor = new StyleColor(Color.red * 0.8f);
+                _playButton.style.borderBottomColor = new StyleColor(Color.red * 0.8f);
+                _playButton.tooltip = $"Exit Blocky {_settings.editMode} Mode before entering PlayMode";
+                _playButton.SetEnabled(false);
                 for (var i = 0; i < openSceneCount; i++)
                 {
                     var scene = SceneManager.GetSceneAt(i);
-                    foreach (var preprocessor in preprocessors) preprocessor.RevertScene(this, scene);
+                    foreach (var preprocessor in preprocessors)
+                        preprocessor.RevertScene(this, scene);
                 }
 
                 EditorSceneManager.MarkAllScenesDirty();
@@ -124,7 +162,9 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             foreach (var assembly in assemblies)
             {
                 var preprocessors = assembly.GetTypes()
-                    .Where(t => !t.IsAbstract && t.GetInterfaces().Contains(typeof(IBlockyScenePreprocessor)))
+                    .Where(t =>
+                        !t.IsAbstract &&
+                        t.GetInterfaces().Contains(typeof(IBlockyScenePreprocessor)))
                     .Select(t => (IBlockyScenePreprocessor) Activator.CreateInstance(t)).ToList();
                 results.AddRange(preprocessors);
             }
@@ -162,11 +202,14 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         private void OnSceneGUI(SceneView sceneView)
         {
             if (_settings.editMode == BlockyEditMode.None) return;
-            if (!BlockyEditorUtilities.TryGetTargetPoint(Event.current.mousePosition, _settings.gridHeight,
+            if (!BlockyEditorUtilities.TryGetTargetPoint(Event.current.mousePosition,
+                    _settings.gridHeight,
                     out _settings.target)) return;
-            BlockyEditorUtilities.SetTargetVisualization(_settings.target, _settings.editMode, _settings.brushSize,
+            BlockyEditorUtilities.SetTargetVisualization(_settings.target, _settings.editMode,
+                _settings.brushSize,
                 _isSquareDragging, _draggingSquareList, _dragStartPosition);
-            BlockyEditorUtilities.SetPlacementVisualization(_settings.target, _settings.rotation, _settings.editMode,
+            BlockyEditorUtilities.SetPlacementVisualization(_settings.target, _settings.rotation,
+                _settings.editMode,
                 CurrentBlocky, _placementShader, ref _placementObject);
             _settings.parentSetter.SetVisualization(_settings.target, _settings.gridHeight);
 
@@ -175,6 +218,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         }
 
         private bool _isControllingCamera;
+
         private void HandleInput(Vector3Int target)
         {
             var evt = Event.current;
@@ -184,7 +228,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 EventType.MouseUp when evt.button == 1 => false,
                 _ => _isControllingCamera
             };
-            
+
             if (_isControllingCamera) return;
             if (evt.type == EventType.KeyDown)
             {
@@ -197,10 +241,12 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                         _settings.gridHeight++;
                         break;
                     case KeyCode.Q:
-                        _settings.rotation.y = BlockyUtilities.ClampAngle(_settings.rotation.y + 90);
+                        _settings.rotation.y =
+                            BlockyUtilities.ClampAngle(_settings.rotation.y + 90);
                         break;
                     case KeyCode.E:
-                        _settings.rotation.y = BlockyUtilities.ClampAngle(_settings.rotation.y - 90);
+                        _settings.rotation.y =
+                            BlockyUtilities.ClampAngle(_settings.rotation.y - 90);
                         break;
                     case KeyCode.R:
                         _settings.randomRotation = !_settings.randomRotation;
@@ -224,7 +270,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                         _settings.brushSize = 3;
                         break;
                 }
-                
+
                 if (!evt.control && !evt.shift) evt.Use();
                 Repaint();
                 return;
@@ -245,17 +291,17 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             };
 
             if (action == null || evt.button != decimal.Zero) return;
-            
-            if (CurrentBlocky == null)
-            {
-                Debug.LogWarning("No BlockyObject Selected from Palette.");
-                return;
-            }
 
             Undo.IncrementCurrentGroup();
             _undoGroup = _draggingSet.Count == 0 ? Undo.GetCurrentGroup() : _undoGroup;
             if (evt.type == EventType.MouseUp)
             {
+                if (CurrentBlocky == null)
+                {
+                    Debug.LogWarning("No BlockyObject Selected from Palette.");
+                    return;
+                }
+
                 evt.Use();
                 if (_isSquareDragging)
                 {
@@ -274,9 +320,25 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             if (_isSquareDragging) return;
 
             if (evt.type != EventType.MouseDown && evt.type != EventType.MouseDrag) return;
-            if (evt.type == EventType.MouseDrag && !evt.shift) _isDragging = true;
+            if (evt.type == EventType.MouseDrag && !evt.shift)
+            {
+                if (CurrentBlocky == null)
+                {
+                    Debug.LogWarning("No BlockyObject Selected from Palette.");
+                    return;
+                }
+
+                _isDragging = true;
+            }
+
             if (evt.shift)
             {
+                if (CurrentBlocky == null)
+                {
+                    Debug.LogWarning("No BlockyObject Selected from Palette.");
+                    return;
+                }
+
                 _isSquareDragging = true;
                 _dragStartPosition = target;
                 evt.Use();
@@ -285,6 +347,12 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
             if (!_isDragging || !_draggingSet.Contains(target))
             {
+                if (CurrentBlocky == null)
+                {
+                    Debug.LogWarning("No BlockyObject Selected from Palette.");
+                    return;
+                }
+
                 action(target, _undoGroup);
                 _draggingSet.Add(target);
             }
@@ -313,15 +381,15 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             scroll.AddToClassList("preview-scroll");
             var prev = rootVisualElement.Q("Palette");
             if (prev != null) rootVisualElement.Remove(prev);
-            
+
             var container = new GroupBox {style = {position = Position.Relative}};
             container.AddToClassList("preview-container");
             var palette = _settings.palette;
             if (palette == null || palette.Count == 0) return;
             var paletteInspector = new InspectorElement(_settings.palette);
             scroll.Add(paletteInspector);
-            
-            var layerLabel = new Label { name = "LayerLabel"};
+
+            var layerLabel = new Label {name = "LayerLabel"};
             layerLabel.AddToClassList("layer-label");
             scroll.Add(layerLabel);
             scroll.Add(container);
@@ -358,7 +426,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             }
 
             container.AddManipulator(new Clickable(() => { SelectButton(null, null); }));
-            foreach (var btn in buttons) btn.RegisterCallback<ClickEvent>(evt => SelectButton(evt, btn));
+            foreach (var btn in buttons)
+                btn.RegisterCallback<ClickEvent>(evt => SelectButton(evt, btn));
             yield break;
 
             void SelectButton(ClickEvent evt, VisualElement button)
@@ -420,7 +489,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 {
                     Undo.SetCurrentGroupName("Remove Blocky Objects");
                     Undo.CollapseUndoOperations(undoGroup);
-                    Undo.ClearUndo(_placementObject); // shouldn't be needed but having weird effects on the placement object
+                    Undo.ClearUndo(
+                        _placementObject); // shouldn't be needed but having weird effects on the placement object
                 }
             }
         }
@@ -446,7 +516,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
             if (block == null) throw new ArgumentNullException(nameof(block));
             block.transform.position = pos;
-            if (CurrentBlocky is not BlockyRuleSet) block.transform.rotation = Quaternion.Euler(_settings.rotation);
+            if (CurrentBlocky is not BlockyRuleSet)
+                block.transform.rotation = Quaternion.Euler(_settings.rotation);
             var parent = _settings.parentSetter.GetParent(block);
             if (_settings.randomRotation && block.allowRandomRotation)
             {
@@ -454,7 +525,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 block.transform.rotation = Quaternion.Euler(new Vector3(0, rnd * 90, 0));
             }
 
-            if (_settings.useUndo) Undo.SetTransformParent(block.transform, parent, "Set Blocky Object Parent");
+            if (_settings.useUndo)
+                Undo.SetTransformParent(block.transform, parent, "Set Blocky Object Parent");
             else block.transform.SetParent(parent);
 
             _map.Add(block, _settings.useUndo);
@@ -463,7 +535,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             {
                 Undo.SetCurrentGroupName("Create new Blocky Objects");
                 Undo.CollapseUndoOperations(undoGroup);
-                Undo.ClearUndo(_placementObject); // shouldn't be needed but having weird effects on the placement object
+                Undo.ClearUndo(
+                    _placementObject); // shouldn't be needed but having weird effects on the placement object
             }
         }
 
@@ -482,13 +555,17 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     var update = ruleSet.GetPrefab(_map, ruleKey);
                     if (_settings.useUndo)
                     {
-                        Undo.RegisterCreatedObjectUndo(update.gameObject, "Create neighbouring Blocky Object");
-                        Undo.RecordObject(update.transform, "Set Neighbouring Blocky Object Transform");
+                        Undo.RegisterCreatedObjectUndo(update.gameObject,
+                            "Create neighbouring Blocky Object");
+                        Undo.RecordObject(update.transform,
+                            "Set Neighbouring Blocky Object Transform");
                     }
+
                     var existingTransform = existingBlock.transform;
                     update.transform.position = existingTransform.position;
                     if (_settings.useUndo)
-                        Undo.SetTransformParent(update.transform, existingTransform.parent, "Set neighbour Parent");
+                        Undo.SetTransformParent(update.transform, existingTransform.parent,
+                            "Set neighbour Parent");
                     else update.transform.SetParent(existingTransform.parent);
                     _map.Add(update, _settings.useUndo);
                 }

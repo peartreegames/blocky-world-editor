@@ -22,9 +22,10 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         public bool randomRotation;
         [Range(0, 3)] public int brushSize;
 
+
         public BlockyPalette palette;
-        public IBlockyPiece Selected;
-        public BlockyParentSetter parentSetter;
+        [SerializeReference] public IBlockyPiece Selected;
+        [SerializeReference] public BlockyParentSetter parentSetter;
 
         [SerializeField] public bool useUndo;
 
@@ -58,7 +59,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
     {
         private SerializedObject _settings;
 
-        public BlockyEditorSettingsProvider(string path, SettingsScope scopes, IEnumerable<string> keywords = null) :
+        public BlockyEditorSettingsProvider(string path, SettingsScope scopes,
+            IEnumerable<string> keywords = null) :
             base(path, scopes, keywords)
         {
         }
@@ -69,7 +71,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var title = new Label
             {
                 text = "Blocky Editor",
-                style = { fontSize = 22, unityFontStyleAndWeight = FontStyle.Bold }
+                style = {fontSize = 22, unityFontStyleAndWeight = FontStyle.Bold}
             };
             rootElement.Add(title);
             var undo = new PropertyField(_settings.FindProperty("useUndo"));
@@ -80,7 +82,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         [SettingsProvider]
         public static SettingsProvider CreateSettings()
         {
-            return new BlockyEditorSettingsProvider("Preferences/Blocky Editor", SettingsScope.User);
+            return new BlockyEditorSettingsProvider("Preferences/Blocky Editor",
+                SettingsScope.User);
         }
     }
 }
