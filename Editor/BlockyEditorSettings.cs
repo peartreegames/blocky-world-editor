@@ -24,8 +24,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
 
         public BlockyPalette palette;
-        [SerializeReference] public IBlockyPiece Selected;
-        [SerializeReference] public BlockyParentSetter parentSetter;
+        [SerializeField] public IBlockyPiece Selected;
+        [SerializeField] public BlockyParentSetter parentSetter;
 
         [SerializeField] public bool useUndo;
 

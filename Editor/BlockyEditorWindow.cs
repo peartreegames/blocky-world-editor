@@ -78,8 +78,10 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             var viewVisualTree = iWindowBackendType.GetProperty("visualTree",
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (viewVisualTree == null || guiBackend == null) return;
             var windowBackend = guiBackend.GetValue(currentToolbar);
-            var toolbarElement = (VisualElement) viewVisualTree.GetValue(windowBackend, null);
+            if (windowBackend == null) return;
+            var toolbarElement = viewVisualTree.GetValue(windowBackend, null) as VisualElement;
             _playButton = toolbarElement.Q("Play");
         }
 
