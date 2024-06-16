@@ -1,10 +1,10 @@
 {
   "name": "com.peartreegames.blockyworldeditor",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "displayName": "Blocky World Editor",
   "description": "3D TileMap Editor",
-  "unity": "2021.2",
-  "unityRelease": "2f1",
+  "unity": "2022.3",
+  "unityRelease": "23f1",
   "documentationUrl": "https://github.com/peartreegames/blocky-world-editor",
   "changelogUrl": "https://github.com/peartreegames/blocky-world-editor/changelog.html",
   "licensesUrl": "https://github.com/peartreegames/blocky-world-editor/licensing.html",

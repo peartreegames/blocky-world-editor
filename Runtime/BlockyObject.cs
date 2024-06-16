@@ -46,5 +46,13 @@ namespace PeartreeGames.BlockyWorldEditor
             return null;
 #endif
         }
+
+        private void OnDrawGizmosSelected()
+        {
+            var col = Color.blue;
+            col.a = 0.5f;
+            Gizmos.color = col;
+            Gizmos.DrawWireCube(transform.position - Vector3.up * 0.5f, Vector3.one);
+        }
     }
 }

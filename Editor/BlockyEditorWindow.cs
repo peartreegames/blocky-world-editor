@@ -67,7 +67,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             rootVisualElement.Add(_settingsView);
             RefreshPalette();
             Repaint();
-            
+
             var toolbarType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.Toolbar");
             var toolbars = Resources.FindObjectsOfTypeAll(toolbarType);
             var currentToolbar = toolbars.Length > 0 ? (ScriptableObject) toolbars[0] : null;
@@ -123,13 +123,17 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var preprocessors = GetScenePreprocessors();
             var openSceneCount = SceneManager.sceneCount;
 
-            
+
             if (mode == BlockyEditMode.None)
             {
-                _playButton.SetEnabled(true);
-                _playButton.style.borderBottomColor = new StyleColor(Color.clear);
-                _playButton.style.borderTopColor = new StyleColor(Color.clear);
-                _playButton.tooltip = "Play";
+                if (_playButton != null)
+                {
+                    _playButton.SetEnabled(true);
+                    _playButton.style.borderBottomColor = new StyleColor(Color.clear);
+                    _playButton.style.borderTopColor = new StyleColor(Color.clear);
+                    _playButton.tooltip = "Play";
+                }
+
                 for (var i = 0; i < openSceneCount; i++)
                 {
                     var scene = SceneManager.GetSceneAt(i);
@@ -142,10 +146,15 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             }
             else
             {
-                _playButton.style.borderTopColor = new StyleColor(Color.red * 0.8f);
-                _playButton.style.borderBottomColor = new StyleColor(Color.red * 0.8f);
-                _playButton.tooltip = $"Exit Blocky {_settings.editMode} Mode before entering PlayMode";
-                _playButton.SetEnabled(false);
+                if (_playButton != null)
+                {
+                    _playButton.style.borderTopColor = new StyleColor(Color.red * 0.8f);
+                    _playButton.style.borderBottomColor = new StyleColor(Color.red * 0.8f);
+                    _playButton.tooltip =
+                        $"Exit Blocky {_settings.editMode} Mode before entering PlayMode";
+                    _playButton.SetEnabled(false);
+                }
+
                 for (var i = 0; i < openSceneCount; i++)
                 {
                     var scene = SceneManager.GetSceneAt(i);
@@ -441,7 +450,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 {
                     _settings.Selected = block;
                     var layerLabel = container.parent.Q<Label>("LayerLabel");
-                    layerLabel.text = $"Layer: {block.Layer.name}";
+                    layerLabel.text = $"Layer: {block?.Layer?.name ?? "Null"}";
                     button.AddToClassList("preview-active");
                     if (evt.ctrlKey)
                     {
