@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using PeartreeGames.Blocky.WorldEditor.BlockyMap;
+using PeartreeGames.Blocky.WorldEditor.Editor.BlockyVisualElements;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -12,7 +14,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 
-namespace PeartreeGames.BlockyWorldEditor.Editor
+namespace PeartreeGames.Blocky.WorldEditor.Editor
 {
     public class BlockyEditorWindow : EditorWindow
     {
@@ -48,14 +50,19 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             EditorApplication.playModeStateChanged += OnPlaymodeChange;
             if (_settings == null) _settings = BlockyEditorSettings.GetOrCreateSettings();
             if (_settings.useUndo) Undo.undoRedoPerformed += PopulateMap;
+            DrawWindow();
+        }
 
+        private void DrawWindow()
+        {
             _placementShader = Shader.Find("Blocky/Placement");
             PopulateMap();
             if (_settings.parentSetter == null)
             {
                 _settings.parentSetter =
                     AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(_settings))
-                        .First(a => a is BlockyParentSetter) as BlockyParentSetter;
+                            .First(a => a is BlockyParentSetter.BlockyParentSetter) as
+                        BlockyParentSetter.BlockyParentSetter;
             }
 
             _settings.editMode = BlockyEditMode.None;
@@ -70,7 +77,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
             var toolbarType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.Toolbar");
             var toolbars = Resources.FindObjectsOfTypeAll(toolbarType);
-            var currentToolbar = toolbars.Length > 0 ? (ScriptableObject) toolbars[0] : null;
+            var currentToolbar = toolbars.Length > 0 ? (ScriptableObject)toolbars[0] : null;
             var guiViewType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.GUIView");
             var iWindowBackendType =
                 typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.IWindowBackend");
@@ -90,7 +97,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             switch (obj)
             {
                 case PlayModeStateChange.EnteredEditMode:
-                    RefreshPalette();
+                    DrawWindow();
                     break;
                 case PlayModeStateChange.ExitingEditMode:
                     break;
@@ -176,7 +183,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                     .Where(t =>
                         !t.IsAbstract &&
                         t.GetInterfaces().Contains(typeof(IBlockyScenePreprocessor)))
-                    .Select(t => (IBlockyScenePreprocessor) Activator.CreateInstance(t)).ToList();
+                    .Select(t => (IBlockyScenePreprocessor)Activator.CreateInstance(t)).ToList();
                 results.AddRange(preprocessors);
             }
 
@@ -393,14 +400,14 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             var prev = rootVisualElement.Q("Palette");
             if (prev != null) rootVisualElement.Remove(prev);
 
-            var container = new GroupBox {style = {position = Position.Relative}};
+            var container = new GroupBox { style = { position = Position.Relative } };
             container.AddToClassList("preview-container");
             var palette = _settings.palette;
             if (palette == null || palette.Count == 0) return;
             var paletteInspector = new InspectorElement(_settings.palette);
             scroll.Add(paletteInspector);
 
-            var layerLabel = new Label {name = "LayerLabel"};
+            var layerLabel = new Label { name = "LayerLabel" };
             layerLabel.AddToClassList("layer-label");
             scroll.Add(layerLabel);
             scroll.Add(container);
@@ -419,17 +426,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 };
                 buttons.Add(button);
                 button.AddToClassList("preview");
-                Texture2D texture = null;
-                var count = 0;
-                // in case GetTexture isn't implemented we'll add a failsafe count
-                while (texture == null && count < 20)
-                {
-                    texture = block.GetTexture();
-                    count++;
-                    yield return null;
-                }
-
-                var img = new Image {image = texture};
+                var texture = block.GetTexture();
+                var img = new Image { image = texture };
                 img.AddToClassList("preview");
                 button.Add(img);
                 button.Add(new Label(block.Name));
@@ -586,7 +584,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         public void PopulateMap()
         {
             _map = new BlockyObjectMap();
-            var objs = FindObjectsOfType<BlockyObject>();
+            var objs = FindObjectsByType<BlockyObject>(FindObjectsSortMode.None);
             foreach (var obj in objs) _map.Add(obj, _settings.useUndo);
         }
     }

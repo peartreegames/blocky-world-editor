@@ -1,16 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using UnityEditor;
 using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor.Editor
+namespace PeartreeGames.Blocky.WorldEditor.Editor.BlockyParentSetter
 {
     public class BlockyDefaultParentSetter : BlockyParentSetter
     {
-        [SerializeField]
-        [BlockySceneObject("Parent")] 
-        private GameObject parent;
-
-        public GameObject Parent { get; set; }
-
-        public override Transform GetParent(BlockyObject block) => Parent == null ? null : Parent.transform;
+        [SerializeField] public SceneObject parent;
+        public override Transform GetParent(BlockyObject block)
+        {
+            if (parent == null) return null;
+            if (parent.gameObject != null) return parent.gameObject.transform;
+            if (string.IsNullOrEmpty(parent.id)) return null;
+            GlobalObjectId.TryParse(parent.id, out var id);
+            parent.gameObject = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id) as GameObject;
+            if (parent.gameObject != null) return parent.gameObject.transform;
+            return null;
+        }
     }
 }

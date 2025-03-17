@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor
+namespace PeartreeGames.Blocky.WorldEditor
 {
     [CreateAssetMenu(fileName = "bPalette_", menuName = "Blocky/Palette", order = 0)]
     public class BlockyPalette : ScriptableObject

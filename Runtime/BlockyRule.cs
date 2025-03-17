@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor
+namespace PeartreeGames.Blocky.WorldEditor
 {
     [Serializable]
     public class BlockyRule

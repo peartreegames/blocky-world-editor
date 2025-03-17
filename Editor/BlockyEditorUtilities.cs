@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor.Editor
+namespace PeartreeGames.Blocky.WorldEditor.Editor
 {
     public static class BlockyEditorUtilities
     {

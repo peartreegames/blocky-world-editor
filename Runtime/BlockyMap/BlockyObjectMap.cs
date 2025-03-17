@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor
+namespace PeartreeGames.Blocky.WorldEditor.BlockyMap
 {
     public class BlockyObjectMap : Dictionary<BlockyObjectKey, BlockyObject>
     {

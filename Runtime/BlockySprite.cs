@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor
+namespace PeartreeGames.Blocky.WorldEditor
 {
     public class BlockySprite : BlockyObject
     {

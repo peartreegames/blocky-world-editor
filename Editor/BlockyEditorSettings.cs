@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using PeartreeGames.Blocky.WorldEditor.Editor.BlockyParentSetter;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace PeartreeGames.BlockyWorldEditor.Editor
+namespace PeartreeGames.Blocky.WorldEditor.Editor
 {
     public enum BlockyEditMode
     {
@@ -24,9 +25,8 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
 
 
         public BlockyPalette palette;
-        [SerializeField] public IBlockyPiece Selected;
-        [SerializeField] public BlockyParentSetter parentSetter;
-
+        public IBlockyPiece Selected;
+        [SerializeField] public BlockyParentSetter.BlockyParentSetter parentSetter;
         [SerializeField] public bool useUndo;
 
         public static BlockyEditorSettings GetOrCreateSettings()

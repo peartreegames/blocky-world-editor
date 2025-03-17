@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using PeartreeGames.Blocky.WorldEditor.BlockyMap;
+using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor
+namespace PeartreeGames.Blocky.WorldEditor
 {
     public interface IBlockyPiece
     {

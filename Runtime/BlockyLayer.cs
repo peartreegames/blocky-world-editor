@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor
+namespace PeartreeGames.Blocky.WorldEditor
 {
     [CreateAssetMenu(fileName = "bLayer_", menuName = "Blocky/Layer", order = 0)]
     public class BlockyLayer : ScriptableObject

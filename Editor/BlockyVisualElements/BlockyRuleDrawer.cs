@@ -1,11 +1,10 @@
-﻿using System;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
-namespace PeartreeGames.BlockyWorldEditor.Editor
+namespace PeartreeGames.Blocky.WorldEditor.Editor.BlockyVisualElements
 {
     [CustomPropertyDrawer(typeof(BlockyRule))]
     public class BlockyRuleDrawer : PropertyDrawer
@@ -92,7 +91,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
             _ => ""
         };
 
-        private static Texture2D GetTexture(Object obj) => obj switch
+        private static Texture GetTexture(Object obj) => obj switch
         {
             GameObject go => go.GetComponent<IBlockyPiece>()?.GetTexture(),
             ScriptableObject so => ((IBlockyPiece) so).GetTexture(),

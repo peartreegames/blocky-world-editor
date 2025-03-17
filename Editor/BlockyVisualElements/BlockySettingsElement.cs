@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using PeartreeGames.Blocky.WorldEditor.Editor.Attributes;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace PeartreeGames.BlockyWorldEditor.Editor
+namespace PeartreeGames.Blocky.WorldEditor.Editor.BlockyVisualElements
 {
     public sealed class BlockySettingsElement : VisualElement
     {
@@ -165,15 +166,15 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
         }
         
 
-        private static List<BlockyParentSetter> GetParentSetters(SerializedObject obj, BlockyEditorWindow window)
+        private static List<BlockyParentSetter.BlockyParentSetter> GetParentSetters(SerializedObject obj, BlockyEditorWindow window)
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var parentSetterClasses = new List<BlockyParentSetter>();
+            var parentSetterClasses = new List<BlockyParentSetter.BlockyParentSetter>();
             foreach (var assembly in assemblies)
             {
                 var parentSetters = assembly.GetTypes()
-                    .Where(t => !t.IsAbstract && t.IsSubclassOf(typeof(BlockyParentSetter))).Select(
-                        t => ScriptableObject.CreateInstance(t.Name) as BlockyParentSetter).ToList();
+                    .Where(t => !t.IsAbstract && t.IsSubclassOf(typeof(BlockyParentSetter.BlockyParentSetter))).Select(
+                        t => ScriptableObject.CreateInstance(t.Name) as BlockyParentSetter.BlockyParentSetter).ToList();
                 parentSetterClasses.AddRange(parentSetters);
             }
 
@@ -187,7 +188,7 @@ namespace PeartreeGames.BlockyWorldEditor.Editor
                 AssetDatabase.ImportAsset(path);
             }
             
-            return AssetDatabase.LoadAllAssetsAtPath(path).OfType<BlockyParentSetter>().ToList();
+            return AssetDatabase.LoadAllAssetsAtPath(path).OfType<BlockyParentSetter.BlockyParentSetter>().ToList();
         }
 
         private static List<BlockyPalette> GetPalettes() => AssetDatabase.FindAssets($"t:{nameof(BlockyPalette)}")

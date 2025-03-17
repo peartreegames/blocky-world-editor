@@ -1,6 +1,6 @@
 ﻿using UnityEngine.SceneManagement;
 
-namespace PeartreeGames.BlockyWorldEditor.Editor
+namespace PeartreeGames.Blocky.WorldEditor.Editor
 {
     public interface IBlockyScenePreprocessor
     {

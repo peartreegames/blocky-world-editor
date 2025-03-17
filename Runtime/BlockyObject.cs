@@ -1,7 +1,8 @@
 ﻿using System;
+using PeartreeGames.Blocky.WorldEditor.BlockyMap;
 using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor
+namespace PeartreeGames.Blocky.WorldEditor
 {
     public class BlockyObject : MonoBehaviour, IBlockyPiece
     {

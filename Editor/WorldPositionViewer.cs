@@ -1,12 +1,10 @@
-﻿using System.Security.Cryptography;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEditor.Overlays;
 using UnityEditor.Toolbars;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace PeartreeGames.BlockyWorldEditor.Editor
+namespace PeartreeGames.Blocky.WorldEditor.Editor
 {
     [EditorToolbarElement("World Position", typeof(SceneView))]
     public class WorldPositionField : EditorToolbarButton

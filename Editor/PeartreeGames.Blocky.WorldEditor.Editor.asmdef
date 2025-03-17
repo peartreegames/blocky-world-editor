@@ -1,8 +1,8 @@
 ﻿{
-  "name": "PeartreeGames.BlockyWorldEditor.Editor",
-  "rootNamespace": "PeartreeGames.BlockyWorldEditor.Editor",
+  "name": "PeartreeGames.Blocky.WorldEditor.Editor",
+  "rootNamespace": "PeartreeGames.Blocky.WorldEditor.Editor",
   "references": [
-    "PeartreeGames.BlockyWorldEditor",
+    "PeartreeGames.Blocky.WorldEditor",
     "Unity.Addressables",
     "Unity.Addressables.Editor",
     "Unity.ResourceManager",

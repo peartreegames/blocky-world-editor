@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor.Editor
+namespace PeartreeGames.Blocky.WorldEditor.Editor.BlockyParentSetter
 {
     public abstract class BlockyParentSetter : ScriptableObject
     {

@@ -1,6 +1,6 @@
 ﻿{
-  "name": "PeartreeGames.BlockyWorldEditor",
-  "rootNamespace": "PeartreeGames.BlockyWorldEditor",
+  "name": "PeartreeGames.Blocky.WorldEditor",
+  "rootNamespace": "PeartreeGames.Blocky.WorldEditor",
   "references": [],
   "includePlatforms": [],
   "excludePlatforms": [],

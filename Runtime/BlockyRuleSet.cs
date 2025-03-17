@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using PeartreeGames.Blocky.WorldEditor.BlockyMap;
 using UnityEngine;
 
-namespace PeartreeGames.BlockyWorldEditor
+namespace PeartreeGames.Blocky.WorldEditor
 {
     [CreateAssetMenu(fileName = "bRuleSet_", menuName = "Blocky/RuleSet", order = 0)]
     public class BlockyRuleSet : ScriptableObject, IBlockyPiece
@@ -136,7 +137,7 @@ namespace PeartreeGames.BlockyWorldEditor
             for (var i = 0; i < blocks.Length; i++)
             {
                 var texture = blocks[i].GetTexture();
-                textures[i] = texture;
+                textures[i] = texture as Texture2D;
             }
             if (textures[0] == null) return Texture2D.grayTexture;
             var w = textures[0].width;
