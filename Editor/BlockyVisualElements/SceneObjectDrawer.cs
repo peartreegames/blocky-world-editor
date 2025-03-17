@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace PeartreeGames.Blocky.WorldEditor.Editor.BlockyVisualElements
+namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
 {
     [CustomPropertyDrawer(typeof(SceneObject))]
     public class SceneObjectDrawer : PropertyDrawer

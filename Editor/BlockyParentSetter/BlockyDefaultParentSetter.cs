@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace PeartreeGames.Blocky.WorldEditor.Editor.BlockyParentSetter
+namespace PeartreeGames.Blocky.World.Editor.BlockyParentSetter
 {
     public class BlockyDefaultParentSetter : BlockyParentSetter
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace PeartreeGames.Blocky.WorldEditor.BlockyMap
+namespace PeartreeGames.Blocky.World.BlockyMap
 {
     public struct BlockyObjectKey : IEquatable<BlockyObjectKey>
     {

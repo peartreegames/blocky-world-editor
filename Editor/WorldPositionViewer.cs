@@ -4,7 +4,7 @@ using UnityEditor.Toolbars;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace PeartreeGames.Blocky.WorldEditor.Editor
+namespace PeartreeGames.Blocky.World.Editor
 {
     [EditorToolbarElement("World Position", typeof(SceneView))]
     public class WorldPositionField : EditorToolbarButton

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using PeartreeGames.Blocky.WorldEditor.BlockyMap;
+using PeartreeGames.Blocky.World.BlockyMap;
 using UnityEngine;
 
-namespace PeartreeGames.Blocky.WorldEditor
+namespace PeartreeGames.Blocky.World
 {
     [CreateAssetMenu(fileName = "bRuleSet_", menuName = "Blocky/RuleSet", order = 0)]
     public class BlockyRuleSet : ScriptableObject, IBlockyPiece

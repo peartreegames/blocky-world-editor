@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using PeartreeGames.Blocky.WorldEditor.Editor.Attributes;
+using PeartreeGames.Blocky.World.Editor.Attributes;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace PeartreeGames.Blocky.WorldEditor.Editor.BlockyVisualElements
+namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
 {
     public sealed class BlockySettingsElement : VisualElement
     {

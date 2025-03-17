@@ -3,7 +3,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace PeartreeGames.Blocky.WorldEditor.Editor
+namespace PeartreeGames.Blocky.World.Editor
 {
     [CustomEditor(typeof(BlockyPalette))]
     public class BlockyPaletteEditor : UnityEditor.Editor

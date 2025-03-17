@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PeartreeGames.Blocky.WorldEditor.Editor.Attributes
+namespace PeartreeGames.Blocky.World.Editor.Attributes
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class BlockyButtonAttribute : Attribute

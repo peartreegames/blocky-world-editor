@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
-namespace PeartreeGames.Blocky.WorldEditor.Editor.BlockyVisualElements
+namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
 {
     [CustomPropertyDrawer(typeof(BlockyRule))]
     public class BlockyRuleDrawer : PropertyDrawer

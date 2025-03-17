@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using PeartreeGames.Blocky.WorldEditor.BlockyMap;
-using PeartreeGames.Blocky.WorldEditor.Editor.BlockyVisualElements;
+using PeartreeGames.Blocky.World.BlockyMap;
+using PeartreeGames.Blocky.World.Editor.BlockyVisualElements;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 
-namespace PeartreeGames.Blocky.WorldEditor.Editor
+namespace PeartreeGames.Blocky.World.Editor
 {
     public class BlockyEditorWindow : EditorWindow
     {

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using PeartreeGames.Blocky.WorldEditor.BlockyMap;
+using PeartreeGames.Blocky.World.BlockyMap;
 using UnityEngine;
 
-namespace PeartreeGames.Blocky.WorldEditor
+namespace PeartreeGames.Blocky.World
 {
     [CreateAssetMenu(fileName = "bRandom_", menuName = "Blocky/Randomizer", order = 0)]
     public class BlockyRandomizer : ScriptableObject, IBlockyPiece

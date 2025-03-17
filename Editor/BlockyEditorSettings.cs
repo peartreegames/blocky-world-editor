@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using PeartreeGames.Blocky.WorldEditor.Editor.BlockyParentSetter;
+using PeartreeGames.Blocky.World.Editor.BlockyParentSetter;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace PeartreeGames.Blocky.WorldEditor.Editor
+namespace PeartreeGames.Blocky.World.Editor
 {
     public enum BlockyEditMode
     {
