@@ -82,7 +82,7 @@ namespace PeartreeGames.Blocky.World.Editor
         [SettingsProvider]
         public static SettingsProvider CreateSettings()
         {
-            return new BlockyEditorSettingsProvider("Preferences/Blocky Editor",
+            return new BlockyEditorSettingsProvider("Preferences/Blocky",
                 SettingsScope.User);
         }
     }
