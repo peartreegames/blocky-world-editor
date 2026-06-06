@@ -21,6 +21,8 @@ namespace PeartreeGames.Blocky.World.Editor
         public int gridHeight;
         public Vector3 rotation;
         public bool randomRotation;
+        public bool placeAtTop;
+        public bool raycastHeight;
         [Range(0, 3)] public int brushSize;
 
 

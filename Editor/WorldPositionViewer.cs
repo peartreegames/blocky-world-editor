@@ -27,6 +27,7 @@ namespace PeartreeGames.Blocky.World.Editor
             }
 
             SceneView.duringSceneGui += UpdateField;
+            RegisterCallback<DetachFromPanelEvent>(_ => SceneView.duringSceneGui -= UpdateField);
             Add(field);
         }
     }

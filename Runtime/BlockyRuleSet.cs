@@ -136,8 +136,7 @@ namespace PeartreeGames.Blocky.World
             var textures = new Texture2D[blocks.Length];
             for (var i = 0; i < blocks.Length; i++)
             {
-                var texture = blocks[i].GetTexture();
-                textures[i] = texture as Texture2D;
+                textures[i] = blocks[i] == null ? null : blocks[i].GetTexture();
             }
             if (textures[0] == null) return Texture2D.grayTexture;
             var w = textures[0].width;

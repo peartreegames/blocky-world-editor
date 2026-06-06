@@ -1,4 +1,5 @@
 using System.Linq;
+using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace PeartreeGames.Blocky.World.Editor
         public int callbackOrder => 1000;
         public void OnProcessScene(Scene scene, BuildReport report)
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
             var blocks = scene.GetRootGameObjects()
                 .SelectMany(r => r.GetComponentsInChildren<BlockyObject>());
             foreach(var block in blocks) Object.DestroyImmediate(block);

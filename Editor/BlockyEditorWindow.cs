@@ -21,7 +21,9 @@ namespace PeartreeGames.Blocky.World.Editor
         private BlockyEditorSettings _settings;
         private SerializedObject _serializedSettings;
         private BlockyObjectMap _map;
+        private BlockyObjectHeightMap _heightMap;
         private bool _isDragging;
+        private bool _isPlacing;
         private readonly HashSet<Vector3Int> _draggingSet = new();
 
         private bool _isSquareDragging;
@@ -173,8 +175,11 @@ namespace PeartreeGames.Blocky.World.Editor
             }
         }
 
+        private static List<IBlockyScenePreprocessor> _preprocessorCache;
+
         private static List<IBlockyScenePreprocessor> GetScenePreprocessors()
         {
+            if (_preprocessorCache != null) return _preprocessorCache;
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             var results = new List<IBlockyScenePreprocessor>();
             foreach (var assembly in assemblies)
@@ -188,7 +193,8 @@ namespace PeartreeGames.Blocky.World.Editor
             }
 
             results.Sort((a, b) => b.Order - a.Order);
-            return results;
+            _preprocessorCache = results;
+            return _preprocessorCache;
         }
 
 
@@ -200,7 +206,7 @@ namespace PeartreeGames.Blocky.World.Editor
 
         private void OnDestroy()
         {
-            if (_placementObject != null) DestroyImmediate(_placementObject);
+            BlockyEditorUtilities.DestroyPlacementObject(ref _placementObject);
             SceneView.duringSceneGui -= OnSceneGUI;
             _draggingSet.Clear();
             _draggingSet.TrimExcess();
@@ -210,7 +216,7 @@ namespace PeartreeGames.Blocky.World.Editor
 
         private void OnLostFocus()
         {
-            if (_placementObject != null) DestroyImmediate(_placementObject);
+            BlockyEditorUtilities.DestroyPlacementObject(ref _placementObject);
             _draggingSet.Clear();
             _draggingSet.TrimExcess();
             _draggingSquareList.Clear();
@@ -219,13 +225,16 @@ namespace PeartreeGames.Blocky.World.Editor
 
         private void OnSceneGUI(SceneView sceneView)
         {
-            if (_settings.editMode == BlockyEditMode.None) return;
+            if (_settings == null || _settings.editMode == BlockyEditMode.None || _isPlacing) return;
             if (!BlockyEditorUtilities.TryGetTargetPoint(Event.current.mousePosition,
-                    _settings.gridHeight,
+                    _settings.gridHeight, _settings.raycastHeight,
                     out _settings.target)) return;
+
+            if (CurrentBlocky == null) return;
             BlockyEditorUtilities.SetTargetVisualization(_settings.target, _settings.editMode,
-                _settings.brushSize,
-                _isSquareDragging, _draggingSquareList, _dragStartPosition);
+                _settings.brushSize, _settings.placeAtTop,
+                _isSquareDragging, _draggingSquareList, _dragStartPosition, _heightMap,
+                CurrentBlocky.Layer, 0);
             BlockyEditorUtilities.SetPlacementVisualization(_settings.target, _settings.rotation,
                 _settings.editMode,
                 CurrentBlocky, _placementShader, ref _placementObject);
@@ -269,6 +278,12 @@ namespace PeartreeGames.Blocky.World.Editor
                     case KeyCode.R:
                         _settings.randomRotation = !_settings.randomRotation;
                         break;
+                    case KeyCode.T:
+                        _settings.placeAtTop = !_settings.placeAtTop;
+                        break;
+                    case KeyCode.H:
+                        _settings.raycastHeight = !_settings.raycastHeight;
+                        break;
                     case KeyCode.Equals:
                         _settings.brushSize = Mathf.Clamp(_settings.brushSize + 1, 0, 3);
                         break;
@@ -292,6 +307,16 @@ namespace PeartreeGames.Blocky.World.Editor
                 if (!evt.control && !evt.shift) evt.Use();
                 Repaint();
                 return;
+            }
+
+            var topAdj = evt.control ? 0 : 1;
+            if (_settings.placeAtTop)
+            {
+                target.y = _heightMap.TryGetValue(
+                    new BlockyObjectHeightKey(target, CurrentBlocky.Layer),
+                    out var h)
+                    ? h + topAdj
+                    : 0;
             }
 
             if (evt.type == EventType.Layout)
@@ -375,17 +400,29 @@ namespace PeartreeGames.Blocky.World.Editor
                 _draggingSet.Add(target);
             }
 
+            _isPlacing = true;
             for (var i = -_settings.brushSize; i <= _settings.brushSize; i++)
             {
                 for (var j = -_settings.brushSize; j <= _settings.brushSize; j++)
                 {
                     if (i == 0 && j == 0) continue;
                     var addPos = target + new Vector3Int(i, 0, j);
+
+                    if (_settings.placeAtTop)
+                    {
+                        addPos.y = _heightMap.TryGetValue(
+                            new BlockyObjectHeightKey(addPos, CurrentBlocky.Layer),
+                            out var h)
+                            ? h + topAdj
+                            : 0;
+                    }
+
                     if (_isDragging && _draggingSet.Contains(addPos)) continue;
                     action(addPos, _undoGroup);
                     _draggingSet.Add(addPos);
                 }
             }
+            _isPlacing = false;
         }
 
         public void RefreshPalette()
@@ -418,26 +455,44 @@ namespace PeartreeGames.Blocky.World.Editor
         private IEnumerator CreatePreviewIcons(BlockyPalette palette, VisualElement container)
         {
             var buttons = new List<Button>();
+            var entries = new List<(IBlockyPiece piece, Image img)>();
             foreach (var block in palette.Blocks)
             {
-                var button = new Button
-                {
-                    userData = block
-                };
+                var button = new Button { userData = block };
                 buttons.Add(button);
                 button.AddToClassList("preview");
-                var texture = block.GetTexture();
-                var img = new Image { image = texture };
+                var img = new Image();
                 img.AddToClassList("preview");
                 button.Add(img);
                 button.Add(new Label(block.Name));
                 container.Add(button);
+                entries.Add((block, img));
             }
 
             container.AddManipulator(new Clickable(() => { SelectButton(null, null); }));
             foreach (var btn in buttons)
                 btn.RegisterCallback<ClickEvent>(evt => SelectButton(evt, btn));
-            yield break;
+
+            // Poll every pending piece each frame so renders proceed in parallel,
+            // not sequentially. Each call kicks Unity's async preview render along;
+            // pieces drop out of the pending list as their textures resolve.
+            const double totalTimeoutSeconds = 10.0;
+            var deadline = EditorApplication.timeSinceStartup + totalTimeoutSeconds;
+            var pending = new List<(IBlockyPiece piece, Image img)>(entries);
+            while (pending.Count > 0 && EditorApplication.timeSinceStartup < deadline)
+            {
+                for (var i = pending.Count - 1; i >= 0; i--)
+                {
+                    var (piece, img) = pending[i];
+                    var tex = piece.GetTexture();
+                    if (tex == null) continue;
+                    img.image = tex;
+                    img.MarkDirtyRepaint();
+                    pending.RemoveAt(i);
+                }
+                if (pending.Count == 0) break;
+                yield return null;
+            }
 
             void SelectButton(ClickEvent evt, VisualElement button)
             {
@@ -489,7 +544,19 @@ namespace PeartreeGames.Blocky.World.Editor
             if (CurrentBlocky == null) return;
             if (_map.TryGetValue(new BlockyObjectKey(pos, CurrentBlocky.Layer), out var blocky))
             {
+                _heightMap.Remove(blocky);
                 _map.Remove(blocky);
+                var p = pos;
+                var found = false;
+                do
+                {
+                    p.y -= 1;
+                    if (!_map.TryGetValue(new BlockyObjectKey(p, CurrentBlocky.Layer),
+                            out var below)) continue;
+                    found = true;
+                    _heightMap.Add(below);
+                } while (found && p.y > 0);
+
                 if (_settings.useUndo) Undo.DestroyObjectImmediate(blocky.gameObject);
                 else DestroyImmediate(blocky.gameObject);
 
@@ -507,8 +574,9 @@ namespace PeartreeGames.Blocky.World.Editor
         private void AddBlockyObject(Vector3Int pos, int undoGroup)
         {
             if (CurrentBlocky == null) return;
-            var key = new BlockyObjectKey(pos, CurrentBlocky.Layer);
+            _heightMap.Add(new BlockyObjectHeightKey(pos, CurrentBlocky.Layer), pos.y);
 
+            var key = new BlockyObjectKey(pos, CurrentBlocky.Layer);
             if (_map.TryGetValue(new BlockyObjectKey(pos, CurrentBlocky.Layer), out var blocky))
             {
                 _map.Remove(blocky);
@@ -584,8 +652,13 @@ namespace PeartreeGames.Blocky.World.Editor
         public void PopulateMap()
         {
             _map = new BlockyObjectMap();
+            _heightMap = new BlockyObjectHeightMap();
             var objs = FindObjectsByType<BlockyObject>(FindObjectsSortMode.None);
-            foreach (var obj in objs) _map.Add(obj, _settings.useUndo);
+            foreach (var obj in objs)
+            {
+                _map.Add(obj, _settings.useUndo);
+                _heightMap.Add(obj, _settings.useUndo);
+            }
         }
     }
 }

@@ -86,6 +86,12 @@ namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
 
             var gridHeight = new PropertyField(serializedSettings.FindProperty("gridHeight"));
             gridHeight.Bind(serializedSettings);
+            
+            var raycastHeight = new PropertyField(serializedSettings.FindProperty("raycastHeight"));
+            raycastHeight.Bind(serializedSettings);
+            
+            var placeAtTop = new PropertyField(serializedSettings.FindProperty("placeAtTop"));
+            placeAtTop.Bind(serializedSettings);
 
             var brushSize = new PropertyField(serializedSettings.FindProperty("brushSize"));
             brushSize.Bind(serializedSettings);
@@ -94,6 +100,8 @@ namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
             placement.Add(targetRotation);
             placement.Add(randomRotation);
             placement.Add(gridHeight);
+            placement.Add(raycastHeight);
+            placement.Add(placeAtTop);
             placement.Add(brushSize);
 
             var modes = new GroupBox();
@@ -153,7 +161,14 @@ namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
                     ((BlockyButtonAttribute) method.GetCustomAttributes(typeof(BlockyButtonAttribute), false)[0]).label;
                 var button = new Button(() =>
                 {
-                    method.Invoke(prop.objectReferenceValue, null);
+                    try
+                    {
+                        method.Invoke(prop.objectReferenceValue, null);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
                 })
                 {
                     text = label ?? method.Name
@@ -179,6 +194,7 @@ namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
             }
 
             var path = AssetDatabase.GetAssetPath(obj.targetObject);
+            AssetDatabase.RemoveScriptableObjectsWithMissingScript(path);
             var subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
             foreach (var result in parentSetterClasses)
             {
@@ -194,6 +210,4 @@ namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
         private static List<BlockyPalette> GetPalettes() => AssetDatabase.FindAssets($"t:{nameof(BlockyPalette)}")
             .Select(guid => AssetDatabase.LoadAssetAtPath<BlockyPalette>(AssetDatabase.GUIDToAssetPath(guid))).ToList();
     }
-
-
 }

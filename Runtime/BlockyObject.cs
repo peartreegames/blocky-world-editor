@@ -1,5 +1,4 @@
-﻿using System;
-using PeartreeGames.Blocky.World.BlockyMap;
+﻿using PeartreeGames.Blocky.World.BlockyMap;
 using UnityEngine;
 
 namespace PeartreeGames.Blocky.World
@@ -26,8 +25,9 @@ namespace PeartreeGames.Blocky.World
         public virtual Texture2D GetTexture()
         {
 #if UNITY_EDITOR
-            // Getting Failed to restore override lighting settings 
-            // since upgrading to 2021.2.8f when compiling when using RenderStaticPreview
+            // RenderStaticPreview's built-in lighting is brighter than AssetPreview's.
+            // It returns null while Unity asynchronously renders; the palette coroutine
+            // polls until it resolves.
             var path = UnityEditor.AssetDatabase.GetAssetPath(gameObject);
             var editor = UnityEditor.Editor.CreateEditor(gameObject);
             Texture2D texture = null;
@@ -35,12 +35,10 @@ namespace PeartreeGames.Blocky.World
             {
                 texture = editor.RenderStaticPreview(path, null, 200, 200);
             }
-            catch (Exception)
+            catch (System.Exception)
             {
-                // ignored
+                // ignored - editor may throw during async preview warm-up
             }
-            
-
             DestroyImmediate(editor);
             return texture;
 #else

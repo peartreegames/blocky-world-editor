@@ -18,6 +18,7 @@ namespace PeartreeGames.Blocky.World
             get
             {
                 var result = new List<IBlockyPiece>();
+                if (blocks == null) return result;
                 foreach (var block in blocks)
                 {
                     var iBlock = block switch
