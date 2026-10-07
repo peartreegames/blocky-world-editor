@@ -439,24 +439,41 @@ namespace PeartreeGames.Blocky.World.Editor
 
             var container = new GroupBox { style = { position = Position.Relative } };
             container.AddToClassList("preview-container");
-            var palette = _settings.palette;
-            if (palette == null || palette.Count == 0) return;
-            var paletteInspector = new InspectorElement(_settings.palette);
-            scroll.Add(paletteInspector);
+            var folder = _settings.paletteFolder;
+            if (!AssetDatabase.IsValidFolder(folder)) return;
+            var pieces = FindPieces(folder).Where(entry => entry.folder == folder).Select(entry => entry.piece).ToList();
+            if (pieces.Count == 0) return;
 
             var layerLabel = new Label { name = "LayerLabel" };
             layerLabel.AddToClassList("layer-label");
             scroll.Add(layerLabel);
             scroll.Add(container);
             rootVisualElement.Insert(1, scroll);
-            EditorCoroutineUtility.StartCoroutine(CreatePreviewIcons(palette, container), this);
+            EditorCoroutineUtility.StartCoroutine(CreatePreviewIcons(pieces, container), this);
         }
 
-        private IEnumerator CreatePreviewIcons(BlockyPalette palette, VisualElement container)
+        public static List<(string folder, IBlockyPiece piece)> FindPieces(params string[] folders)
+        {
+            const string filter = "t:Prefab t:BlockyRuleSet t:BlockyRandomizer";
+            var guids = folders.Length == 0 ? AssetDatabase.FindAssets(filter) : AssetDatabase.FindAssets(filter, folders);
+            return guids.Select(AssetDatabase.GUIDToAssetPath)
+                .OrderBy(path => path)
+                .Select(path => (folder: System.IO.Path.GetDirectoryName(path)!.Replace('\\', '/'),
+                    piece: AssetDatabase.LoadMainAssetAtPath(path) switch
+                    {
+                        GameObject go => go.GetComponent<IBlockyPiece>(),
+                        IBlockyPiece asset => asset,
+                        _ => null
+                    }))
+                .Where(entry => entry.piece != null)
+                .ToList();
+        }
+
+        private IEnumerator CreatePreviewIcons(List<IBlockyPiece> pieces, VisualElement container)
         {
             var buttons = new List<Button>();
             var entries = new List<(IBlockyPiece piece, Image img)>();
-            foreach (var block in palette.Blocks)
+            foreach (var block in pieces)
             {
                 var button = new Button { userData = block };
                 buttons.Add(button);
