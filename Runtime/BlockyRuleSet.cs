@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using PeartreeGames.Blocky.World.BlockyMap;
@@ -16,20 +16,21 @@ namespace PeartreeGames.Blocky.World
         [SerializeField] private GameObject defaultBlock;
         public List<BlockyRule> rules;
         [SerializeField] private Texture2D thumbnail;
+        [SerializeField] private List<GameObject> slopes = new();
+        [SerializeField] private Vector3Int slopeAscent = Vector3Int.left;
         public string Name => this == null ? null : name;
         public BlockyObject GetPrefab(BlockyObjectMap map, BlockyObjectKey key)
         {
             #if UNITY_EDITOR
-            var neighbours = BlockyRule.Neighbours.Select(p =>
-                map.TryGetValue(new BlockyObjectKey(key.Cell + p, key.Layer), out var block) ? block : null).ToArray();
+            var neighbours = BlockyRule.Neighbours.Select(p => IsSame(map, key, p)).ToArray();
             BlockyObject result = null;
             var rotation = Vector3.zero;
             var scale = Vector3.one;
             foreach (var rule in rules)
             {
-                var ruleNeighbours = neighbours.Clone() as BlockyObject[];
+                var ruleNeighbours = neighbours;
                 var block = rule.block.GetComponent<BlockyObject>();
-                if (rule.Matches(this, ruleNeighbours))
+                if (rule.Matches(ruleNeighbours))
                 {
                     result = block;
                     break;
@@ -43,14 +44,14 @@ namespace PeartreeGames.Blocky.World
                         for (var i = 1; i < 4; i++)
                         {
                             ruleNeighbours = RotateNeighbours(ruleNeighbours);
-                            if (!rule.Matches(this, ruleNeighbours)) continue;
+                            if (!rule.Matches(ruleNeighbours)) continue;
                             result = block;
                             rotation = new Vector3(0, i * 90, 0);
                         }
                         break;
                     case BlockyTransform.MirrorX:
                         ruleNeighbours = MirrorNeighbours(ruleNeighbours, true, false);
-                        if (rule.Matches(this, ruleNeighbours))
+                        if (rule.Matches(ruleNeighbours))
                         {
                             result = block;
                             scale = new Vector3(-1, 1, 1);
@@ -58,19 +59,19 @@ namespace PeartreeGames.Blocky.World
                         break;
                     case BlockyTransform.MirrorY:
                         ruleNeighbours = MirrorNeighbours(ruleNeighbours, false, true);
-                        if (rule.Matches(this, ruleNeighbours))
+                        if (rule.Matches(ruleNeighbours))
                         {
                             result = block;
                             scale = new Vector3(1, 1, -1);
                         }
                         break;
                     case BlockyTransform.MirrorXY:
-                        if (rule.Matches(this, MirrorNeighbours(ruleNeighbours, true, false)))
+                        if (rule.Matches(MirrorNeighbours(ruleNeighbours, true, false)))
                         {
                             result = block;
                             scale = new Vector3(-1, 1, 1);
                         }
-                        if (rule.Matches(this, MirrorNeighbours(ruleNeighbours, false, true)))
+                        if (rule.Matches(MirrorNeighbours(ruleNeighbours, false, true)))
                         {
                             result = block;
                             scale = new Vector3(1, 1, -1);
@@ -98,9 +99,35 @@ namespace PeartreeGames.Blocky.World
 
         public GameObject GetPlacement() => defaultBlock;
 
-        private static BlockyObject[] MirrorNeighbours(BlockyObject[] neighbours, bool x, bool y)
+        #if UNITY_EDITOR
+        public bool IsSlope(BlockyObject block) =>
+            slopes.Contains(UnityEditor.PrefabUtility.GetCorrespondingObjectFromSource(block.gameObject));
+
+        private bool IsSame(BlockyObjectMap map, BlockyObjectKey key, Vector3Int offset)
         {
-            var result = new BlockyObject[9];
+            if (offset == Vector3Int.zero) return true;
+            if (map.TryGetValue(new BlockyObjectKey(key.Cell + offset, key.Layer), out var block))
+            {
+                if (block.TryGetComponent<BlockyRuleBehaviour>(out var rule) && rule.ruleSet == this) return true;
+                // a slope at this level joins when it climbs up to us
+                if (IsSlope(block) && Climbs(block, -offset)) return true;
+            }
+            // a slope one level up joins when it climbs away from us
+            return map.TryGetValue(new BlockyObjectKey(key.Cell + offset + Vector3Int.up, key.Layer), out var above) &&
+                   IsSlope(above) && Climbs(above, offset);
+        }
+
+        // true when the slope's ascent runs along either axis of dir, so diagonals join both ways
+        private bool Climbs(BlockyObject slope, Vector3Int dir)
+        {
+            var ascent = Vector3Int.RoundToInt(slope.transform.rotation * (Vector3)slopeAscent);
+            return ascent.x != 0 ? ascent.x == dir.x : ascent.z == dir.z;
+        }
+        #endif
+
+        private static bool[] MirrorNeighbours(bool[] neighbours, bool x, bool y)
+        {
+            var result = new bool[9];
             for (var i = 0; i < 3; i++)
             {
                 for (var j = 0; j < 3; j++)
@@ -114,9 +141,9 @@ namespace PeartreeGames.Blocky.World
             return result;
         }
 
-        private static BlockyObject[] RotateNeighbours(BlockyObject[] neighbours)
+        private static bool[] RotateNeighbours(bool[] neighbours)
         {
-            var result = new BlockyObject[9];
+            var result = new bool[9];
             for (var i = 0; i < 3; i++)
             {
                 for (var j = 0; j < 3; j++)

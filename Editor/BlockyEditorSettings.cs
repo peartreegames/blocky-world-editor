@@ -24,6 +24,7 @@ namespace PeartreeGames.Blocky.World.Editor
         public bool placeAtTop;
         public bool raycastHeight;
         [Range(0, 3)] public int brushSize;
+        public int iconSize = 96;
 
 
         public string paletteFolder;

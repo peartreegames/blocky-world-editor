@@ -20,11 +20,13 @@
 }
 .preview {
     -unity-background-scale-mode: scale-to-fit;
-    min-width: 80px;
-    max-width: 100px;
-    min-height: 100px;
-    max-height: 120px;
     border-width: 2px;
+}
+
+.icon-size-slider {
+    align-self: flex-end;
+    width: 120px;
+    margin: 4px 8px;
 }
 
 .preview-label {

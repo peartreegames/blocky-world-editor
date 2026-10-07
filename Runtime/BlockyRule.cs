@@ -28,27 +28,22 @@ namespace PeartreeGames.Blocky.World
             grid = new BlockyCellRule[9];
         }
 
-        public bool Matches(BlockyRuleSet set, BlockyObject[] neighbours)
+        public bool Matches(bool[] same)
         {
-            for (var i = 0; i < neighbours.Length; i++)
+            for (var i = 0; i < same.Length; i++)
             {
-                var neighbour = neighbours[i];
-                var cell = grid[i];
-                var match = cell switch
+                var match = grid[i] switch
                 {
                     BlockyCellRule.None => true,
-                    BlockyCellRule.Diff =>!NeighbourMatches(set, neighbour),
-                    BlockyCellRule.Same => NeighbourMatches(set, neighbour),
+                    BlockyCellRule.Diff => !same[i],
+                    BlockyCellRule.Same => same[i],
                     _ => throw new ArgumentOutOfRangeException()
                 };
                 if (!match) return false;
             }
-            
+
             return true;
         }
-
-        private bool NeighbourMatches(BlockyRuleSet set, BlockyObject neighbour) => neighbour != null &&
-            neighbour.TryGetComponent<BlockyRuleBehaviour>(out var rule) && rule.ruleSet == set;
     }
 
     [Serializable]

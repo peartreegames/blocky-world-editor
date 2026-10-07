@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,6 +12,8 @@ namespace PeartreeGames.Blocky.World.Editor
         private SerializedProperty defaultBlockProperty;
         private SerializedProperty layerProperty;
         private SerializedProperty thumbnailProperty;
+        private SerializedProperty slopesProperty;
+        private SerializedProperty slopeAscentProperty;
 
         private void OnEnable()
         {
@@ -19,6 +21,8 @@ namespace PeartreeGames.Blocky.World.Editor
             defaultBlockProperty = serializedObject.FindProperty("defaultBlock");
             layerProperty = serializedObject.FindProperty("layer");
             thumbnailProperty = serializedObject.FindProperty("thumbnail");
+            slopesProperty = serializedObject.FindProperty("slopes");
+            slopeAscentProperty = serializedObject.FindProperty("slopeAscent");
         }
 
         public override VisualElement CreateInspectorGUI()
@@ -38,6 +42,12 @@ namespace PeartreeGames.Blocky.World.Editor
             elem.Add(defaultField);
             elem.Add(layerField);
             elem.Add(rulesField);
+            foreach (var property in new[] { slopesProperty, slopeAscentProperty })
+            {
+                var field = new PropertyField(property);
+                field.Bind(serializedObject);
+                elem.Add(field);
+            }
             return elem;
         }
     }
