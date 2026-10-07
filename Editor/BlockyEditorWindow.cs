@@ -427,9 +427,9 @@ namespace PeartreeGames.Blocky.World.Editor
 
         public void RefreshPalette()
         {
+            var palette = new VisualElement { name = "Palette", style = { flexGrow = 1 } };
             var scroll = new ScrollView
             {
-                name = "Palette",
                 horizontalScrollerVisibility = ScrollerVisibility.Hidden,
                 verticalScrollerVisibility = ScrollerVisibility.AlwaysVisible
             };
@@ -448,8 +448,29 @@ namespace PeartreeGames.Blocky.World.Editor
             layerLabel.AddToClassList("layer-label");
             scroll.Add(layerLabel);
             scroll.Add(container);
-            rootVisualElement.Insert(1, scroll);
+
+            var sizeSlider = new SliderInt(48, 256) { value = _settings.iconSize };
+            sizeSlider.AddToClassList("icon-size-slider");
+            sizeSlider.RegisterValueChangedCallback(changed =>
+            {
+                _settings.iconSize = changed.newValue;
+                EditorUtility.SetDirty(_settings);
+                SetIconSize(container, changed.newValue);
+            });
+
+            palette.Add(scroll);
+            palette.Add(sizeSlider);
+            rootVisualElement.Insert(1, palette);
             EditorCoroutineUtility.StartCoroutine(CreatePreviewIcons(pieces, container), this);
+        }
+
+        private static void SetIconSize(VisualElement container, int size)
+        {
+            foreach (var button in container.Query<Button>(className: "preview").ToList())
+            {
+                button.style.width = size;
+                button.Q<Image>().style.height = size;
+            }
         }
 
         public static List<(string folder, IBlockyPiece piece)> FindPieces(params string[] folders)
@@ -481,10 +502,13 @@ namespace PeartreeGames.Blocky.World.Editor
                 var img = new Image();
                 img.AddToClassList("preview");
                 button.Add(img);
-                button.Add(new Label(block.Name));
+                var label = new Label(block.Name);
+                label.AddToClassList("preview-label");
+                button.Add(label);
                 container.Add(button);
                 entries.Add((block, img));
             }
+            SetIconSize(container, _settings.iconSize);
 
             container.AddManipulator(new Clickable(() => { SelectButton(null, null); }));
             foreach (var btn in buttons)
@@ -636,17 +660,17 @@ namespace PeartreeGames.Blocky.World.Editor
 
         private void SetNeighbourObjects(Vector3Int pos)
         {
-            if (CurrentBlocky is not BlockyRuleSet ruleSet) return;
-            foreach (var dir in BlockyRule.Neighbours)
+            // rule tiles one level down also look at this cell, through ruleset slopes
+            foreach (var dir in BlockyRule.Neighbours.Where(d => d != Vector3Int.zero)
+                         .SelectMany(d => new[] { d, d + Vector3Int.down }))
             {
-                if (dir == Vector3Int.zero) continue;
                 var rulePos = pos + dir;
                 var ruleKey = new BlockyObjectKey(rulePos, CurrentBlocky.Layer);
                 if (_map.TryGetValue(ruleKey, out var existingBlock) &&
                     existingBlock.TryGetComponent<BlockyRuleBehaviour>(out var ruleBehaviour) &&
-                    ruleBehaviour.ruleSet == ruleSet)
+                    ruleBehaviour.ruleSet != null)
                 {
-                    var update = ruleSet.GetPrefab(_map, ruleKey);
+                    var update = ruleBehaviour.ruleSet.GetPrefab(_map, ruleKey);
                     if (_settings.useUndo)
                     {
                         Undo.RegisterCreatedObjectUndo(update.gameObject,
