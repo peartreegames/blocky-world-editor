@@ -14,25 +14,24 @@ namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
         public BlockySettingsElement(BlockyEditorWindow window, SerializedObject serializedSettings)
         {
             var settings = (BlockyEditorSettings) serializedSettings.targetObject;
-            var palettes = GetPalettes();
             var paletteDropdown = new DropdownField
             {
-                choices = palettes.Select(palette => palette.name).ToList(),
-                value = settings.palette == null
-                    ? ""
-                    : palettes.Find(palette => palette.name == settings.palette.name).name,
-                label = "Palette"
+                choices = GetPieceFolders(),
+                value = settings.paletteFolder ?? "",
+                label = "Folder",
+                // menus split on '/' into submenus; U+2215 looks the same but stays flat
+                formatListItemCallback = folder => folder.Replace('/', '∕')
             };
             paletteDropdown.RegisterCallback<FocusEvent>(_ =>
             {
-                palettes = GetPalettes();
-                paletteDropdown.choices = palettes.Select(palette => palette.name).ToList();
+                paletteDropdown.choices = GetPieceFolders();
                 MarkDirtyRepaint();
             });
 
             paletteDropdown.RegisterValueChangedCallback(changed =>
             {
-                settings.palette = palettes.Find(palette => palette.name == changed.newValue);
+                settings.paletteFolder = changed.newValue;
+                EditorUtility.SetDirty(settings);
                 window.RefreshPalette();
             });
 
@@ -207,7 +206,7 @@ namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
             return AssetDatabase.LoadAllAssetsAtPath(path).OfType<BlockyParentSetter.BlockyParentSetter>().ToList();
         }
 
-        private static List<BlockyPalette> GetPalettes() => AssetDatabase.FindAssets($"t:{nameof(BlockyPalette)}")
-            .Select(guid => AssetDatabase.LoadAssetAtPath<BlockyPalette>(AssetDatabase.GUIDToAssetPath(guid))).ToList();
+        private static List<string> GetPieceFolders() =>
+            BlockyEditorWindow.FindPieces().Select(entry => entry.folder).Distinct().OrderBy(folder => folder).ToList();
     }
 }

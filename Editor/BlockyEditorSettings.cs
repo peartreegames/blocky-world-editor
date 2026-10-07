@@ -26,7 +26,7 @@ namespace PeartreeGames.Blocky.World.Editor
         [Range(0, 3)] public int brushSize;
 
 
-        public BlockyPalette palette;
+        public string paletteFolder;
         public IBlockyPiece Selected;
         [SerializeField] public BlockyParentSetter.BlockyParentSetter parentSetter;
         [SerializeField] public bool useUndo;

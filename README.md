@@ -20,9 +20,7 @@ To start click `Tools > BlockyEditor`
 
 ### Palettes
 
-`Create > Blocky > Palette`
-
-A collection of IBlockyPieces to place in your scene. Will automatically be added to the dropdown selection.
+The palette shows every IBlockyPiece (BlockyObject prefabs, rule sets, randomizers) directly inside the folder picked in the `Folder` dropdown. Any folder holding a piece is listed automatically.
 
 ### Layers
 
