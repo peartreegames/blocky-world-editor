@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -39,6 +40,17 @@ namespace PeartreeGames.Blocky.World.Editor
             rulesField.Bind(serializedObject);
             
             elem.Add(thumbnailField);
+            var thumbnailImage = new Image { scaleMode = ScaleMode.ScaleToFit, style = { width = 128, height = 128, alignSelf = Align.Center } };
+            void ShowThumbnail(SerializedProperty property)
+            {
+                thumbnailImage.image = property.objectReferenceValue as Texture2D;
+                thumbnailImage.style.display = thumbnailImage.image != null ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+            ShowThumbnail(thumbnailProperty);
+            thumbnailImage.TrackPropertyValue(thumbnailProperty, ShowThumbnail);
+            elem.Add(thumbnailImage);
+            elem.Add(new Button(GenerateThumbnail) { text = "Generate Thumbnail" });
+            elem.Add(new Button(DeleteThumbnail) { text = "Delete Thumbnail" });
             elem.Add(defaultField);
             elem.Add(layerField);
             elem.Add(rulesField);
@@ -49,6 +61,31 @@ namespace PeartreeGames.Blocky.World.Editor
                 elem.Add(field);
             }
             return elem;
+        }
+
+        private void GenerateThumbnail()
+        {
+            var ruleSet = (BlockyRuleSet)target;
+            DeleteThumbnail();
+            var texture = ruleSet.RenderThumbnail();
+            texture.name = "Thumbnail";
+            AssetDatabase.AddObjectToAsset(texture, ruleSet);
+            serializedObject.Update();
+            thumbnailProperty.objectReferenceValue = texture;
+            serializedObject.ApplyModifiedProperties();
+            AssetDatabase.SaveAssetIfDirty(ruleSet);
+        }
+
+        private void DeleteThumbnail()
+        {
+            var children = AssetDatabase.LoadAllAssetRepresentationsAtPath(AssetDatabase.GetAssetPath(target)).OfType<Texture2D>().ToArray();
+            if (children.Length == 0) return;
+            serializedObject.Update();
+            if (children.Contains(thumbnailProperty.objectReferenceValue)) thumbnailProperty.objectReferenceValue = null;
+            serializedObject.ApplyModifiedProperties();
+            foreach (var child in children) DestroyImmediate(child, true);
+            EditorUtility.SetDirty(target);
+            AssetDatabase.SaveAssetIfDirty(target);
         }
     }
 }
