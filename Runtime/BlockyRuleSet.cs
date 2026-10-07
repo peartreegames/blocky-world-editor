@@ -22,7 +22,26 @@ namespace PeartreeGames.Blocky.World
         public BlockyObject GetPrefab(BlockyObjectMap map, BlockyObjectKey key)
         {
             #if UNITY_EDITOR
-            var neighbours = BlockyRule.Neighbours.Select(p => IsSame(map, key, p)).ToArray();
+            var (result, rotation, scale) = Resolve(map, key);
+            var prefab = UnityEditor.PrefabUtility.InstantiatePrefab(result) as BlockyObject;
+            if (prefab == null) return null;
+            var trans = prefab.transform;
+            trans.rotation = Quaternion.Euler(rotation);
+            trans.localScale = scale;
+            var behaviour = prefab.gameObject.AddComponent<BlockyRuleBehaviour>();
+            behaviour.ruleSet = this;
+            return prefab;
+            #else
+            return null;
+            #endif
+        }
+
+        #if UNITY_EDITOR
+        private (BlockyObject block, Vector3 rotation, Vector3 scale) Resolve(BlockyObjectMap map, BlockyObjectKey key) =>
+            Resolve(BlockyRule.Neighbours.Select(p => IsSame(map, key, p)).ToArray());
+
+        private (BlockyObject block, Vector3 rotation, Vector3 scale) Resolve(bool[] neighbours)
+        {
             BlockyObject result = null;
             var rotation = Vector3.zero;
             var scale = Vector3.one;
@@ -84,18 +103,9 @@ namespace PeartreeGames.Blocky.World
             }
 
             if (result == null) result = defaultBlock.GetComponent<BlockyObject>();
-            var prefab = UnityEditor.PrefabUtility.InstantiatePrefab(result) as BlockyObject;
-            if (prefab == null) return null;
-            var trans = prefab.transform;
-            trans.rotation = Quaternion.Euler(rotation);
-            trans.localScale = scale;
-            var behaviour = prefab.gameObject.AddComponent<BlockyRuleBehaviour>();
-            behaviour.ruleSet = this;
-            return prefab;
-            #else
-            return null;
-            #endif
+            return (result, rotation, scale);
         }
+        #endif
 
         public GameObject GetPlacement() => defaultBlock;
 
@@ -158,75 +168,145 @@ namespace PeartreeGames.Blocky.World
         public Texture2D GetTexture()
         {
             if (thumbnail != null) return thumbnail;
-            var blocks = rules.Select(r => r.block == null ? null : r.block.GetComponent<BlockyObject>()).ToArray();
-            if (blocks.Length == 0) return Texture2D.grayTexture;
-            var textures = new Texture2D[blocks.Length];
-            for (var i = 0; i < blocks.Length; i++)
-            {
-                textures[i] = blocks[i] == null ? null : blocks[i].GetTexture();
-            }
-            if (textures[0] == null) return Texture2D.grayTexture;
-            var w = textures[0].width;
-            var h = textures[0].height;
-            var rows = Mathf.Min(blocks.Length, 2);
-            var cols = Mathf.CeilToInt(blocks.Length / 2f);
+            #if UNITY_EDITOR
+            if (preview == null && defaultBlock != null) preview = RenderThumbnail();
+            return preview;
+            #else
+            return Texture2D.grayTexture;
+            #endif
+        }
 
-            var wPerCol = w / cols;
-            var hPerRow = h / rows;
-            var result = new Texture2D(w, h);
-            var pixels = result.GetPixels(0, 0, w, h);
-            for (var i = 0; i < pixels.Length; i++)
+        #if UNITY_EDITOR
+        [NonSerialized] private Texture2D preview;
+
+        private const int ShapeSize = 7;
+
+        public Texture2D RenderThumbnail()
+        {
+            var shape = SearchShape();
+            var cells = Enumerable.Range(0, shape.Length).Where(i => shape[i])
+                .Select(i => new Vector3Int(i % ShapeSize, 0, i / ShapeSize)).ToArray();
+            var render = new UnityEditor.PreviewRenderUtility();
+            try
             {
-                var x = i % w;
-                var y = i / w;
-                var border = x != 0 && x % wPerCol == 0 || y != 0 && y % hPerRow == 0;
-                if (border)
+                foreach (var cell in cells)
                 {
-                    pixels[i] = Color.black;
-                    continue;
+                    var (block, rotation, scale) = Resolve(ShapeNeighbours(shape, cell.x, cell.z));
+                    var go = render.InstantiatePrefabInScene(block.gameObject);
+                    go.transform.SetPositionAndRotation(cell, Quaternion.Euler(rotation));
+                    go.transform.localScale = scale;
                 }
 
-                var quadX = x / wPerCol;
-                var quadY = y / hPerRow;
-                var index = quadX + cols * quadY;
-                if (index >= textures.Length) continue;
-                var item = textures[index];
-                pixels[i] = item != null ? item.GetPixel(x, y) : Color.grey;
+                var min = cells.Aggregate(Vector3Int.Min);
+                var max = cells.Aggregate(Vector3Int.Max);
+                var span = Mathf.Max(max.x - min.x, max.z - min.z) + 1;
+                var cam = render.camera;
+                cam.fieldOfView = 30;
+                cam.nearClipPlane = 0.1f;
+                cam.farClipPlane = 100;
+                cam.transform.rotation = Quaternion.Euler(40, 45, 0);
+                cam.transform.position = (Vector3)(min + max) / 2 + Vector3.down * 0.5f - cam.transform.forward * (2.1f * span);
+                render.lights[0].intensity = 1.6f;
+                render.lights[0].transform.rotation = Quaternion.Euler(50, 30, 0);
+                render.lights[1].intensity = 0.8f;
+                render.ambientColor = new Color(0.5f, 0.5f, 0.5f);
+                render.BeginStaticPreview(new Rect(0, 0, 200, 200));
+                render.Render(true);
+                return render.EndStaticPreview();
             }
-
-            result.SetPixels(pixels);
-            result.Apply();
-            return result;
+            finally
+            {
+                render.Cleanup();
+            }
         }
+
+        // hill-climb a patch that shows as many different blocks as it can in one connected piece;
+        // fixed seeds keep the thumbnail stable between regenerations
+        private bool[] SearchShape()
+        {
+            var resolved = new Dictionary<int, BlockyObject>();
+            bool[] best = null;
+            var bestScore = int.MinValue;
+            for (var seed = 0; seed < 8; seed++)
+            {
+                var rnd = new System.Random(seed);
+                var shape = new bool[ShapeSize * ShapeSize];
+                for (var x = 1; x < ShapeSize - 1; x++)
+                for (var z = 1; z < ShapeSize - 1; z++)
+                    shape[z * ShapeSize + x] = true;
+                var score = ScoreShape(shape, resolved);
+                for (var i = 0; i < 3000; i++)
+                {
+                    var next = (bool[])shape.Clone();
+                    next[rnd.Next(next.Length)] ^= true;
+                    if (rnd.NextDouble() < 0.3) next[rnd.Next(next.Length)] ^= true;
+                    var nextScore = ScoreShape(next, resolved);
+                    if (nextScore < score) continue;
+                    shape = next;
+                    score = nextScore;
+                }
+                if (score <= bestScore) continue;
+                best = shape;
+                bestScore = score;
+            }
+            return best;
+        }
+
+        // a new block is worth 100, a second piece costs 150, so the patch only splits for two more blocks
+        private int ScoreShape(bool[] shape, Dictionary<int, BlockyObject> resolved)
+        {
+            var shown = new HashSet<BlockyObject>();
+            var cells = 0;
+            for (var i = 0; i < shape.Length; i++)
+            {
+                if (!shape[i]) continue;
+                cells++;
+                var neighbours = ShapeNeighbours(shape, i % ShapeSize, i / ShapeSize);
+                var mask = neighbours.Select((same, bit) => same ? 1 << bit : 0).Sum();
+                if (!resolved.TryGetValue(mask, out var block)) resolved[mask] = block = Resolve(neighbours).block;
+                shown.Add(block);
+            }
+            if (cells == 0) return int.MinValue;
+            return shown.Count * 100 - (CountPieces(shape) - 1) * 150 - cells;
+        }
+
+        private static bool[] ShapeNeighbours(bool[] shape, int x, int z) => BlockyRule.Neighbours.Select(p =>
+        {
+            int nx = x + p.x, nz = z + p.z;
+            return nx >= 0 && nz >= 0 && nx < ShapeSize && nz < ShapeSize && shape[nz * ShapeSize + nx];
+        }).ToArray();
+
+        private static int CountPieces(bool[] shape)
+        {
+            var seen = new bool[shape.Length];
+            var pieces = 0;
+            for (var start = 0; start < shape.Length; start++)
+            {
+                if (!shape[start] || seen[start]) continue;
+                pieces++;
+                var stack = new Stack<int>();
+                stack.Push(start);
+                while (stack.Count > 0)
+                {
+                    var i = stack.Pop();
+                    if (i < 0 || i >= shape.Length || seen[i] || !shape[i]) continue;
+                    seen[i] = true;
+                    if (i % ShapeSize > 0) stack.Push(i - 1);
+                    if (i % ShapeSize < ShapeSize - 1) stack.Push(i + 1);
+                    stack.Push(i - ShapeSize);
+                    stack.Push(i + ShapeSize);
+                }
+            }
+            return pieces;
+        }
+        #endif
 
         private void OnValidate()
         {
+            #if UNITY_EDITOR
+            preview = null;
+            #endif
             foreach (var rule in rules.Where(rule => rule.grid.Length != 9)) rule.grid = new BlockyCellRule[9];
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
