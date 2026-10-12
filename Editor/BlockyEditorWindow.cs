@@ -614,7 +614,7 @@ namespace PeartreeGames.Blocky.World.Editor
 
         private void AddBlockyObject(Vector3Int pos, int undoGroup)
         {
-            if (CurrentBlocky == null) return;
+            if (CurrentBlocky == null || !_settings.parentSetter.CanPlace()) return;
             _heightMap.Add(new BlockyObjectHeightKey(pos, CurrentBlocky.Layer), pos.y);
 
             var key = new BlockyObjectKey(pos, CurrentBlocky.Layer);
