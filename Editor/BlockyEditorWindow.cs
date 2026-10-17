@@ -180,17 +180,9 @@ namespace PeartreeGames.Blocky.World.Editor
         private static List<IBlockyScenePreprocessor> GetScenePreprocessors()
         {
             if (_preprocessorCache != null) return _preprocessorCache;
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var results = new List<IBlockyScenePreprocessor>();
-            foreach (var assembly in assemblies)
-            {
-                var preprocessors = assembly.GetTypes()
-                    .Where(t =>
-                        !t.IsAbstract &&
-                        t.GetInterfaces().Contains(typeof(IBlockyScenePreprocessor)))
-                    .Select(t => (IBlockyScenePreprocessor)Activator.CreateInstance(t)).ToList();
-                results.AddRange(preprocessors);
-            }
+            var results = TypeCache.GetTypesDerivedFrom<IBlockyScenePreprocessor>()
+                .Where(t => !t.IsAbstract)
+                .Select(t => (IBlockyScenePreprocessor)Activator.CreateInstance(t)).ToList();
 
             results.Sort((a, b) => b.Order - a.Order);
             _preprocessorCache = results;

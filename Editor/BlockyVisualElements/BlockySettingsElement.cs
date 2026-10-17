@@ -182,15 +182,9 @@ namespace PeartreeGames.Blocky.World.Editor.BlockyVisualElements
 
         private static List<BlockyParentSetter.BlockyParentSetter> GetParentSetters(SerializedObject obj, BlockyEditorWindow window)
         {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var parentSetterClasses = new List<BlockyParentSetter.BlockyParentSetter>();
-            foreach (var assembly in assemblies)
-            {
-                var parentSetters = assembly.GetTypes()
-                    .Where(t => !t.IsAbstract && t.IsSubclassOf(typeof(BlockyParentSetter.BlockyParentSetter))).Select(
-                        t => ScriptableObject.CreateInstance(t.Name) as BlockyParentSetter.BlockyParentSetter).ToList();
-                parentSetterClasses.AddRange(parentSetters);
-            }
+            var parentSetterClasses = TypeCache.GetTypesDerivedFrom<BlockyParentSetter.BlockyParentSetter>()
+                .Where(t => !t.IsAbstract)
+                .Select(t => ScriptableObject.CreateInstance(t.Name) as BlockyParentSetter.BlockyParentSetter).ToList();
 
             var path = AssetDatabase.GetAssetPath(obj.targetObject);
             AssetDatabase.RemoveScriptableObjectsWithMissingScript(path);
