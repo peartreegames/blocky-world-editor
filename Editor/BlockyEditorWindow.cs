@@ -248,7 +248,7 @@ namespace PeartreeGames.Blocky.World.Editor
                 _ => _isControllingCamera
             };
 
-            if (_isControllingCamera) return;
+            if (_isControllingCamera || evt.alt) return;
             if (evt.type == EventType.KeyDown)
             {
                 switch (evt.keyCode)
@@ -337,7 +337,6 @@ namespace PeartreeGames.Blocky.World.Editor
                     return;
                 }
 
-                evt.Use();
                 if (_isSquareDragging)
                 {
                     _isSquareDragging = false;
@@ -355,6 +354,8 @@ namespace PeartreeGames.Blocky.World.Editor
             if (_isSquareDragging) return;
 
             if (evt.type != EventType.MouseDown && evt.type != EventType.MouseDrag) return;
+            // An unused press starts Unity's Box Select clutch, which freezes the Inspector until it sees the MouseUp.
+            if (evt.type == EventType.MouseDown) evt.Use();
             if (evt.type == EventType.MouseDrag && !evt.shift)
             {
                 if (CurrentBlocky == null)
