@@ -687,7 +687,11 @@ namespace PeartreeGames.Blocky.World.Editor
         {
             _map = new BlockyObjectMap();
             _heightMap = new BlockyObjectHeightMap();
+#if UNITY_6000_6_OR_NEWER
             var objs = FindObjectsByType<BlockyObject>();
+#else
+            var objs = FindObjectsByType<BlockyObject>(FindObjectsSortMode.None);
+#endif
             foreach (var obj in objs)
             {
                 _map.Add(obj, _settings.useUndo);
